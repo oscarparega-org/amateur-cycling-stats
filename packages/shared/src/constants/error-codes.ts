@@ -1,0 +1,8 @@
+export const PG_ERROR_CODES = {
+  CANNOT_DELETE_LAST_OWNER: 'ACS01',
+  CATEGORY_IN_USE: 'ACS02',
+  PROTECTED_CATEGORY: 'ACS03',
+  DUPLICATE_RACE_COMBINATION: 'ACS04'
+} as const;
+
+export type PgErrorCode = (typeof PG_ERROR_CODES)[keyof typeof PG_ERROR_CODES];
