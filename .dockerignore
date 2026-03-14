@@ -1,0 +1,11 @@
+node_modules
+.git
+amateur-cycling-stats-supabase
+docs
+*.md
+.turbo
+dist
+build
+.svelte-kit
+.env
+.env.*
