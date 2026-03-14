@@ -1,0 +1,31 @@
+{
+  "name": "acs-backend",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "check": "tsc --noEmit",
+    "lint": "echo 'no linter configured yet'",
+    "test": "echo 'no tests yet'",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@acs/shared": "*",
+    "@hono/node-server": "^1",
+    "@prisma/client": "^6",
+    "hono": "^4"
+  },
+  "devDependencies": {
+    "prisma": "^6",
+    "tsx": "^4",
+    "typescript": "^5.9.3"
+  }
+}
