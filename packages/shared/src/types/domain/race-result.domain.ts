@@ -2,6 +2,7 @@ export interface RaceResult {
   id: string;
   place: number;
   time: string | null;
+  cyclistId: string;
   eventId: string;
   raceId: string;
   raceCategoryAgeId: string;
