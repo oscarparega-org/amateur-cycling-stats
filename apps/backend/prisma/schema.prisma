@@ -1,0 +1,268 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================================================
+// Enums
+// =====================================================
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  UNREGISTERED
+}
+
+enum OrganizationState {
+  ACTIVE
+  INACTIVE
+}
+
+enum EventStatus {
+  DRAFT
+  AVAILABLE
+  SOLD_OUT
+  ON_GOING
+  FINISHED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+enum InvitationRoleType {
+  ORGANIZER_OWNER
+  ORGANIZER_STAFF
+}
+
+// =====================================================
+// Models
+// =====================================================
+
+model Role {
+  id    String @id @default(uuid())
+  name  String @unique
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String?    @unique
+  firstName String     @map("first_name")
+  lastName  String?    @map("last_name")
+  status    UserStatus @default(ACTIVE)
+  roleId    String     @map("role_id")
+
+  role                  Role                     @relation(fields: [roleId], references: [id])
+  cyclist               Cyclist?
+  organizers            Organizer[]
+  createdEvents         Event[]                  @relation("EventCreator")
+  sentInvitations       OrganizationInvitation[] @relation("InvitedBy")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Organization {
+  id          String            @id @default(uuid())
+  name        String
+  description String?
+  state       OrganizationState @default(ACTIVE)
+
+  organizers         Organizer[]
+  events             Event[]
+  invitations        OrganizationInvitation[]
+  raceCategories     RaceCategory[]
+  raceCategoryGenders RaceCategoryGender[]
+  raceCategoryLengths RaceCategoryLength[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("organizations")
+}
+
+model Organizer {
+  id             String @id @default(uuid())
+  userId         String @map("user_id")
+  organizationId String @map("organization_id")
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, organizationId])
+  @@map("organizers")
+}
+
+model Cyclist {
+  id       String  @id @default(uuid())
+  userId   String  @unique @map("user_id")
+  bornYear Int?    @map("born_year")
+  genderId String? @map("gender_id")
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gender      CyclistGender? @relation(fields: [genderId], references: [id])
+  raceResults RaceResult[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("cyclists")
+}
+
+model CyclistGender {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  cyclists Cyclist[]
+
+  @@map("cyclist_genders")
+}
+
+model Event {
+  id              String      @id @default(uuid())
+  name            String
+  description     String?
+  dateTime        DateTime    @map("date_time")
+  eventStatus     EventStatus @default(DRAFT) @map("event_status")
+  year            Int
+  country         String
+  state           String
+  city            String?
+  isPublicVisible Boolean     @default(false) @map("is_public_visible")
+  createdBy       String      @map("created_by")
+  organizationId  String?     @map("organization_id")
+
+  creator      User          @relation("EventCreator", fields: [createdBy], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  races        Race[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("events")
+}
+
+model Race {
+  id                     String   @id @default(uuid())
+  eventId                String   @map("event_id")
+  name                   String?
+  description            String?
+  dateTime               DateTime @map("date_time")
+  raceCategoryAgeId      String   @map("race_category_age_id")
+  raceCategoryGenderId   String   @map("race_category_gender_id")
+  raceCategoryDistanceId String   @map("race_category_distance_id")
+  isPublicVisible        Boolean  @default(false) @map("is_public_visible")
+
+  event            Event              @relation(fields: [eventId], references: [id])
+  categoryAge      RaceCategory       @relation(fields: [raceCategoryAgeId], references: [id])
+  categoryGender   RaceCategoryGender @relation(fields: [raceCategoryGenderId], references: [id])
+  categoryDistance  RaceCategoryLength @relation(fields: [raceCategoryDistanceId], references: [id])
+  results          RaceResult[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([eventId, raceCategoryAgeId, raceCategoryGenderId, raceCategoryDistanceId])
+  @@map("races")
+}
+
+model RaceResult {
+  id        String  @id @default(uuid())
+  raceId    String  @map("race_id")
+  cyclistId String  @map("cyclist_id")
+  time      String?
+  place     Int
+
+  race    Race    @relation(fields: [raceId], references: [id])
+  cyclist Cyclist @relation(fields: [cyclistId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([raceId, cyclistId])
+  @@map("race_results")
+}
+
+model RaceCategory {
+  id             String        @id @default(uuid())
+  name           String        @unique
+  fromAge        Int?          @map("from_age")
+  toAge          Int?          @map("to_age")
+  isGlobal       Boolean       @default(true) @map("is_global")
+  isDefault      Boolean       @default(false) @map("is_default")
+  organizationId String?       @map("organization_id")
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  races        Race[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("race_categories")
+}
+
+model RaceCategoryGender {
+  id             String  @id @default(uuid())
+  name           String  @unique
+  isGlobal       Boolean @default(true) @map("is_global")
+  isDefault      Boolean @default(false) @map("is_default")
+  organizationId String? @map("organization_id")
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  races        Race[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("race_category_genders")
+}
+
+model RaceCategoryLength {
+  id             String  @id @default(uuid())
+  name           String  @unique
+  distance       Float?
+  isGlobal       Boolean @default(true) @map("is_global")
+  isDefault      Boolean @default(false) @map("is_default")
+  organizationId String? @map("organization_id")
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  races        Race[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("race_category_lengths")
+}
+
+model OrganizationInvitation {
+  id                   String             @id @default(uuid())
+  organizationId       String             @map("organization_id")
+  email                String
+  invitedByUserId      String             @map("invited_by_user_id")
+  roleType             InvitationRoleType @map("role_type")
+  status               InvitationStatus   @default(PENDING)
+  retryCount           Int                @default(0) @map("retry_count")
+  lastInvitationSentAt DateTime?          @map("last_invitation_sent_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  invitedBy    User         @relation("InvitedBy", fields: [invitedByUserId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("organization_invitations")
+}
