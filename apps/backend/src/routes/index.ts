@@ -8,10 +8,12 @@ import { cyclists } from './cyclists.js';
 import { raceResults } from './race-results.js';
 import { organizers } from './organizers.js';
 import { invitations } from './invitations.js';
+import { authSetup } from './auth-setup.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function registerRoutes(app: Hono<any>) {
   app.route('/health', health);
+  app.route('/api/auth', authSetup);
   app.route('/api/organizations', organizations);
   app.route('/api/categories', categories);
   app.route('/api/events', events);
