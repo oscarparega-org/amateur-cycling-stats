@@ -8,17 +8,17 @@ import type {
 } from '@prisma/client';
 
 type PrismaCyclistWithRelations = PrismaCyclist & {
-  user: User & { role: Role };
+  user: User & { role: Role | null };
   gender: CyclistGender | null;
 };
 
 export function adaptCyclist(cyclist: PrismaCyclistWithRelations): Cyclist {
   return {
     id: cyclist.id,
-    firstName: cyclist.user.firstName,
+    firstName: cyclist.user.firstName ?? '',
     lastName: cyclist.user.lastName ?? '',
     email: cyclist.user.email,
-    roleType: cyclist.user.role.name === 'CYCLIST' ? RoleTypeEnum.CYCLIST : null,
+    roleType: cyclist.user.role?.name === 'CYCLIST' ? RoleTypeEnum.CYCLIST : null,
     status: cyclist.user.status,
     genderName: cyclist.gender?.name ?? null,
     bornYear: cyclist.bornYear,

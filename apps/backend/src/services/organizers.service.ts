@@ -67,7 +67,7 @@ export async function deleteOrganizer(id: string): Promise<{ success: boolean; e
   if (!organizer) return { success: false, errorCode: 'NOT_FOUND' };
 
   // Check if this is the last owner — use RoleTypeEnum for safe comparison
-  if (organizer.user.role.name === RoleTypeEnum.ORGANIZER_OWNER) {
+  if (organizer.user.role?.name === RoleTypeEnum.ORGANIZER_OWNER) {
     const ownerRole = await prisma.role.findUnique({ where: { name: RoleTypeEnum.ORGANIZER_OWNER } });
     if (ownerRole) {
       const ownerCount = await prisma.organizer.count({

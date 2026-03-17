@@ -3,13 +3,13 @@ import { RoleTypeEnum } from '@acs/shared';
 import type { Organizer as PrismaOrganizer, User, Role } from '@prisma/client';
 
 type PrismaOrganizerWithRelations = PrismaOrganizer & {
-  user: User & { role: Role };
+  user: User & { role: Role | null };
 };
 
 // Role names in seed data are exact uppercase: 'ORGANIZER_OWNER', 'ORGANIZER_STAFF'
 // matching RoleTypeEnum values. Validated here with explicit check.
 export function adaptOrganizer(org: PrismaOrganizerWithRelations): Organizer {
-  const roleName = org.user.role.name;
+  const roleName = org.user.role?.name;
   let roleType: RoleTypeEnum.ORGANIZER_OWNER | RoleTypeEnum.ORGANIZER_STAFF;
   if (roleName === RoleTypeEnum.ORGANIZER_OWNER) {
     roleType = RoleTypeEnum.ORGANIZER_OWNER;
@@ -20,7 +20,7 @@ export function adaptOrganizer(org: PrismaOrganizerWithRelations): Organizer {
   }
   return {
     id: org.id,
-    firstName: org.user.firstName,
+    firstName: org.user.firstName ?? '',
     lastName: org.user.lastName ?? '',
     email: org.user.email ?? '',
     roleType,
