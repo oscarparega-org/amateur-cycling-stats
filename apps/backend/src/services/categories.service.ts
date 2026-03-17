@@ -148,6 +148,17 @@ export async function updateDistanceCategory(
   return adaptDistanceCategory(updated);
 }
 
+// Raw lookups for auth checks (returns Prisma object, not domain type)
+export async function getAgeCategoryRaw(id: string) {
+  return prisma.raceCategory.findUnique({ where: { id } });
+}
+export async function getGenderCategoryRaw(id: string) {
+  return prisma.raceCategoryGender.findUnique({ where: { id } });
+}
+export async function getDistanceCategoryRaw(id: string) {
+  return prisma.raceCategoryLength.findUnique({ where: { id } });
+}
+
 export async function deleteDistanceCategory(id: string): Promise<{ success: boolean; errorCode?: string }> {
   const cat = await prisma.raceCategoryLength.findUnique({
     where: { id },
