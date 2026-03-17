@@ -6,6 +6,7 @@ import { events } from './events.js';
 import { races } from './races.js';
 import { cyclists } from './cyclists.js';
 import { raceResults } from './race-results.js';
+import { organizers } from './organizers.js';
 
 export function registerRoutes(app: Hono) {
   app.route('/health', health);
@@ -15,4 +16,5 @@ export function registerRoutes(app: Hono) {
   app.route('/api/races', races);
   app.route('/api/cyclists', cyclists);
   app.route('/api/race-results', raceResults);
+  app.route('/api/organizers', organizers);
 }
