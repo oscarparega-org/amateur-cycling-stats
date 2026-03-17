@@ -23,9 +23,9 @@ export const auth = betterAuth({
   ],
   user: {
     additionalFields: {
-      firstName: { type: 'string', required: false, fieldName: 'first_name' },
-      lastName: { type: 'string', required: false, fieldName: 'last_name' },
-      roleId: { type: 'string', required: false, fieldName: 'role_id' },
+      firstName: { type: 'string', required: false },
+      lastName: { type: 'string', required: false },
+      roleId: { type: 'string', required: false },
       status: { type: 'string', required: false, defaultValue: 'ACTIVE' }
     }
   },
