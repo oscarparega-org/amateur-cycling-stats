@@ -21,6 +21,7 @@
     "@acs/shared": "*",
     "@hono/node-server": "^1",
     "@prisma/client": "^6",
+    "better-auth": "^1.5.5",
     "hono": "^4"
   },
   "devDependencies": {
