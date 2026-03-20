@@ -2,6 +2,8 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { magicLink } from 'better-auth/plugins';
 import { prisma } from './prisma.js';
+import { sendEmail, consumePendingInvitation } from './email.js';
+import { resetPasswordEmail, magicLinkEmail, invitationEmail } from './email-templates.js';
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
@@ -9,15 +11,18 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async ({ user, url }) => {
-      // Placeholder — Resend integration in Phase 4
-      console.log(`[AUTH] Password reset for ${user.email}: ${url}`);
+      await sendEmail({ to: user.email, ...resetPasswordEmail(url) });
     }
   },
   plugins: [
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        // Placeholder — Resend integration in Phase 4
-        console.log(`[AUTH] Magic link for ${email}: ${url}`);
+        const pending = consumePendingInvitation(email);
+        if (pending) {
+          await sendEmail({ to: email, ...invitationEmail(url, pending.organizationName) });
+        } else {
+          await sendEmail({ to: email, ...magicLinkEmail(url) });
+        }
       }
     })
   ],
