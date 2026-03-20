@@ -3,6 +3,7 @@ import * as invitationsService from '../services/invitations.service.js';
 import { requireAuth, requireOrgOwner, isAdmin, getAuthUser } from '../lib/auth-helpers.js';
 import { auth } from '../lib/auth.js';
 import { prisma } from '../lib/prisma.js';
+import { setPendingInvitation } from '../lib/email.js';
 
 const invitations = new Hono();
 
@@ -39,9 +40,19 @@ invitations.post('/', async (c) => {
   // Create invitation record
   const invitation = await invitationsService.createInvitation(body);
 
+  // Look up organization name for the invitation email
+  const org = await prisma.organization.findUnique({ where: { id: body.organizationId } });
+
+  // Set pending invitation context so the magic link callback sends the branded email
+  setPendingInvitation(body.email, { organizationName: org?.name ?? 'an organization' });
+
   // Trigger BetterAuth magic link for the invited email
   try {
     await auth.api.signInMagicLink({ body: { email: body.email }, headers: c.req.raw.headers });
+    // Update invitation tracking fields
+    await invitationsService.updateInvitation(invitation.id, {
+      retryCount: invitation.retryCount + 1,
+    });
   } catch (err) {
     console.error('[AUTH] Failed to send magic link:', err);
     // Invitation is created even if magic link fails — can be resent later
