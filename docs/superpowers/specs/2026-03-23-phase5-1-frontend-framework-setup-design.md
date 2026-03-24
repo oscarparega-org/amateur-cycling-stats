@@ -46,6 +46,8 @@ Copied from old project. Contains:
 
 Copied from old project. shadcn-svelte configuration:
 - `baseColor: "slate"`
+- `typescript: true`
+- `registry: "https://shadcn-svelte.com/registry"`
 - Aliases: `components → $lib/components`, `ui → $lib/components/ui`, `utils → $lib/utils`, `hooks → $lib/hooks`, `lib → $lib`
 
 ## Modified Files
@@ -55,7 +57,7 @@ Copied from old project. shadcn-svelte configuration:
 Add `@tailwindcss/vite` plugin and Vitest server-only config:
 - Import from `vitest/config` instead of `vite`
 - Add `tailwindcss()` to plugins array
-- Add `test` block with node environment, includes `src/**/*.{test,spec}.{js,ts}`, excludes `.svelte.test.ts` files (browser component tests deferred to 5.12)
+- Add a simplified flat `test` block (not the old project's `test.projects` array) with node environment, includes `src/**/*.{test,spec}.{js,ts}`, excludes `.svelte.test.ts` files. The old project uses a two-project setup (client + server) but we deliberately simplify here since browser component tests are deferred to 5.12. When 5.12 adds Playwright, this will be refactored to the projects-based config.
 
 ### `apps/frontend/package.json`
 
@@ -66,14 +68,18 @@ Add `@tailwindcss/vite` plugin and Vitest server-only config:
 Replace minimal shell with base layout:
 - Import `app.css`
 - Import `Toaster` from `svelte-sonner`
+- `<svelte:head>` with viewport meta (`user-scalable=no, width=device-width, initial-scale=1`) — carried over from old layout
+- Outer `<div class="min-h-screen bg-white">` wrapper — matches old layout for full-height white background
 - Placeholder `<header>` tag (real Header component deferred to 5.3)
 - `Toaster` with `position="top-center"`, `closeButton`, `duration={5000}`, `richColors`
 - `<main>` container with `mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12`
+- Preserve existing favicon `<link>` from current shell
 - No `data` prop / session data (deferred to 5.7 auth flows)
 
 ### `apps/frontend/src/app.html`
 
-Change `lang="en"` to `lang="es"` (Spanish is the default language).
+- Change `lang="en"` to `lang="es"` (Spanish is the default language)
+- Add default `<title>Amateur Cycling Stats</title>` in `<head>`
 
 ## Not in Scope
 
