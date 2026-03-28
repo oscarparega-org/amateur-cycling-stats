@@ -14,7 +14,8 @@
 	},
 	"dependencies": {
 		"@acs/shared": "*",
-		"svelte-sonner": "^1.1.0"
+		"svelte-sonner": "^1.1.0",
+		"sveltekit-i18n": "^2.4.2"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-node": "^5.0.0",
