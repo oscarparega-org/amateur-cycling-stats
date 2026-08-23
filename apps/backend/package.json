@@ -20,15 +20,15 @@
   "dependencies": {
     "@acs/shared": "*",
     "@hono/node-server": "^1",
-    "@prisma/client": "^6",
+    "@prisma/client": "6.19.3",
     "better-auth": "^1.5.5",
     "hono": "^4",
     "resend": "^6.9.4"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
-    "prisma": "^6",
-    "tsx": "^4",
+    "prisma": "6.19.3",
+    "tsx": "^4.23.12",
     "typescript": "^5.9.3"
   }
 }

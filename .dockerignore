@@ -1,9 +1,12 @@
 node_modules
 .git
+archive
 amateur-cycling-stats-supabase
 docs
 *.md
 .turbo
+.next
+*.tsbuildinfo
 dist
 build
 .svelte-kit

@@ -6,6 +6,6 @@ Monorepo for the current Amateur Cycling Stats frontend, backend, and shared pac
 
 ## Structure
 
-- `apps/frontend` — current SvelteKit application
+- `apps/frontend` — current Next.js 16 and React 19 application
 - `apps/backend` — current Hono API
 - `packages/shared` — shared types and utilities

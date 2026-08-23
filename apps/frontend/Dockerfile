@@ -1,6 +1,5 @@
 FROM node:22-slim AS base
 
-# Install dependencies
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -8,31 +7,27 @@ COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/shared/package.json ./packages/shared/
 RUN npm ci
 
-# Build
 FROM base AS build
 WORKDIR /app
 COPY --from=deps /app/ ./
 COPY packages/shared/ ./packages/shared/
 COPY apps/frontend/ ./apps/frontend/
-COPY turbo.json ./
-RUN cd packages/shared && npx tsc
-RUN cd apps/frontend && npm run build
+RUN npm run build --workspace=@acs/shared
+RUN npm run build --workspace=acs-frontend
 
-# Runtime
 FROM base AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
-# Copy built frontend
-COPY --from=build /app/apps/frontend/build ./build
-COPY --from=build /app/apps/frontend/package.json ./package.json
+RUN groupadd --system --gid 1001 nodejs \
+  && useradd --system --uid 1001 --gid nodejs nextjs
 
-# Copy node_modules (hoisted by npm workspaces)
-COPY --from=build /app/node_modules ./node_modules
+COPY --from=build --chown=nextjs:nodejs /app/apps/frontend/public ./apps/frontend/public
+COPY --from=build --chown=nextjs:nodejs /app/apps/frontend/.next/standalone ./
+COPY --from=build --chown=nextjs:nodejs /app/apps/frontend/.next/static ./apps/frontend/.next/static
 
-# Copy built shared package into node_modules
-COPY --from=build /app/packages/shared/dist ./node_modules/@acs/shared/dist
-COPY --from=build /app/packages/shared/package.json ./node_modules/@acs/shared/package.json
-
+USER nextjs
 EXPOSE 3000
-CMD ["node", "build/index.js"]
+CMD ["node", "apps/frontend/server.js"]
