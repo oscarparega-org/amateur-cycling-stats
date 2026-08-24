@@ -9,6 +9,8 @@ RUN npm ci
 
 FROM base AS build
 WORKDIR /app
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 COPY --from=deps /app/ ./
 COPY packages/shared/ ./packages/shared/
 COPY apps/frontend/ ./apps/frontend/

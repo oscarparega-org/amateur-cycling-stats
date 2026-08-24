@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test
+
+      - name: Backend end-to-end tests when configured
+        run: npm run test:e2e --workspace=acs-backend --if-present
+
+      - name: Production build
+        run: npm run build
+
+  containers:
+    name: Production images
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      POSTGRES_USER: acs_ci
+      POSTGRES_PASSWORD: ci-only-placeholder
+      POSTGRES_DB: acs_ci
+      FRONTEND_URL: https://dev.example.invalid
+      PUBLIC_API_URL: https://api-dev.example.invalid
+      TRUSTED_ORIGINS: https://dev.example.invalid
+      BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
+      BETTER_AUTH_URL: https://api-dev.example.invalid
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate production Compose configuration
+        run: docker compose -f docker-compose.prod.yml config --quiet
+
+      - name: Build production images
+        run: docker compose -f docker-compose.prod.yml build
+
+  deploy-development:
+    name: Deploy development
+    needs: containers
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: development
+      url: ${{ vars.DEV_URL }}
+    steps:
+      - name: Trigger Coolify deployment
+        env:
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          COOLIFY_DEV_WEBHOOK: ${{ secrets.COOLIFY_DEV_WEBHOOK }}
+        run: |
+          test -n "$COOLIFY_API_TOKEN"
+          test -n "$COOLIFY_DEV_WEBHOOK"
+          curl --fail-with-body --silent --show-error \
+            --request GET "$COOLIFY_DEV_WEBHOOK" \
+            --header "Authorization: Bearer $COOLIFY_API_TOKEN"

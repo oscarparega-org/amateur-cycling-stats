@@ -8,8 +8,12 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    networks:
-      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   backend:
     build:
@@ -17,33 +21,49 @@ services:
       dockerfile: apps/backend/Dockerfile
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PORT: "3000"
       FRONTEND_URL: ${FRONTEND_URL}
-    networks:
-      - internal
-      - web
+      TRUSTED_ORIGINS: ${TRUSTED_ORIGINS}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-onboarding@resend.dev}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   frontend:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL}
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     environment:
       API_URL: http://backend:3000
       NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL}
-    ports:
-      - "${FRONTEND_PORT:-3001}:3000"
-    networks:
-      - web
-
-networks:
-  internal:
-  web:
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   pgdata:
