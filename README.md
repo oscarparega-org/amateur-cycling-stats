@@ -72,3 +72,12 @@ npm run prepush
 This includes backend E2E, application and production-container builds, frontend E2E, and the browser smoke suite.
 Docker must be running. Browser tests automatically start and remove a disposable PostgreSQL container; CI may instead
 provide `TEST_DATABASE_URL`, whose database name must end in `_test`.
+
+## Product specifications
+
+OpenSpec is the source of truth for product behavior and proposed changes:
+
+- `openspec/specs/` — verified current behavior
+- `openspec/changes/` — desired changes not yet implemented
+- `openspec/config.yaml` — project context and artifact rules
+- `openspec/LEGACY_MIGRATION.md` — provenance for the former Superpowers and archived-project documentation

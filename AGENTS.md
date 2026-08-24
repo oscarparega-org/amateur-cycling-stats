@@ -73,3 +73,5 @@ quality gates. Keep new tooling code covered by focused tests.
 ## OpenSpec
 
 The repository includes OpenSpec workflows under `.codex/skills` and `.claude/skills`. Use them when the task explicitly requests an OpenSpec change or invokes one of those workflows; do not create OpenSpec artifacts for ordinary maintenance by default.
+
+Treat `openspec/specs` as verified current behavior and `openspec/changes` as proposed behavior. Read `openspec/config.yaml` before creating artifacts, and use `openspec/LEGACY_MIGRATION.md` when tracing requirements migrated from the former Superpowers or archived Svelte/Supabase documentation.
