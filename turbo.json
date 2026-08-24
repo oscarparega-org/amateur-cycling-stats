@@ -20,8 +20,17 @@
     "check": {
       "dependsOn": ["^build"]
     },
+    "acs-backend#check": {
+      "dependsOn": ["^build", "db:generate"]
+    },
     "test": {
       "dependsOn": ["^build"]
+    },
+    "acs-backend#test": {
+      "dependsOn": ["^build", "db:generate"]
+    },
+    "acs-backend#lint": {
+      "dependsOn": ["^build", "db:generate"]
     },
     "db:generate": {
       "cache": false
