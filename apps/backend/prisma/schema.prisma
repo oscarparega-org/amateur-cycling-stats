@@ -291,6 +291,7 @@ model Session {
 model Account {
   id                    String    @id
   userId                String    @map("user_id")
+  issuer                String
   accountId             String    @map("account_id")
   providerId            String    @map("provider_id")
   accessToken           String?   @map("access_token")
@@ -306,6 +307,7 @@ model Account {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@unique([issuer, accountId])
   @@map("accounts")
 }
 
