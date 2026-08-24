@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { requireAuth } from '../lib/auth-helpers.js';
 import { prisma } from '../lib/prisma.js';
 import { RoleTypeEnum } from '@acs/shared';
+import { hashPassword } from 'better-auth/crypto';
 
 const authSetup = new Hono();
 
@@ -65,13 +66,7 @@ authSetup.post('/complete-organizer-setup', async (c) => {
     });
 
     // 4. Create credential account with password
-    // Hash password using Node.js built-in scrypt (same algorithm BetterAuth uses)
-    const { scrypt, randomBytes } = await import('node:crypto');
-    const { promisify } = await import('node:util');
-    const scryptAsync = promisify(scrypt);
-    const salt = randomBytes(16).toString('hex');
-    const derivedKey = await scryptAsync(body.password, salt, 64) as Buffer;
-    const hashedPassword = `${salt}:${derivedKey.toString('hex')}`;
+    const hashedPassword = await hashPassword(body.password);
 
     // Check if credential account already exists
     const existingCredential = await tx.account.findFirst({
@@ -82,6 +77,7 @@ authSetup.post('/complete-organizer-setup', async (c) => {
         data: {
           id: crypto.randomUUID(),
           userId: user.id,
+          issuer: 'local:credential',
           accountId: user.id,
           providerId: 'credential',
           password: hashedPassword

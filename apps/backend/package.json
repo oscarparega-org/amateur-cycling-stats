@@ -9,7 +9,10 @@
     "start": "node dist/index.js",
     "check": "tsc --noEmit",
     "lint": "echo 'no linter configured yet'",
-    "test": "echo 'no tests yet'",
+    "test": "npm run test:unit",
+    "test:unit": "vitest run --project unit",
+    "test:e2e": "vitest run --project e2e",
+    "test:all": "vitest run",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts"
@@ -21,14 +24,20 @@
     "@acs/shared": "*",
     "@hono/node-server": "^1",
     "@prisma/client": "6.19.3",
-    "better-auth": "^1.5.5",
+    "better-auth": "1.7.1",
+    "dotenv": "17.2.3",
     "hono": "^4",
     "resend": "^6.9.4"
   },
   "devDependencies": {
+    "@testcontainers/postgresql": "12.0.4",
     "@types/node": "^25.5.0",
+    "fetch-cookie": "^3.2.0",
+    "jose": "^6.2.3",
+    "msw": "^2.12.7",
     "prisma": "6.19.3",
     "tsx": "^4.23.12",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
   }
 }
