@@ -33,7 +33,7 @@ Create a development environment and a Docker Compose application with:
 
 - Repository branch: `main`
 - Base directory: `/`
-- Compose file: `/docker-compose.prod.yml`
+- Compose file: `/docker-compose.coolify.yml`
 - Auto Deploy: disabled
 
 Auto Deploy must be disabled because the GitHub Actions deployment job is the only deployment trigger. Otherwise Coolify starts building immediately on every push and bypasses the CI gate.
