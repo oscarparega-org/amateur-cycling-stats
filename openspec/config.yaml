@@ -1,0 +1,42 @@
+schema: spec-driven
+
+context: |
+  Amateur Cycling Stats is a commercial cycling-event platform in an npm
+  workspaces monorepo orchestrated by Turborepo.
+
+  Current stack:
+  - apps/frontend: Next.js 16, React 19, App Router, Tailwind CSS 4.
+  - apps/backend: Hono, Prisma, Better Auth, Resend, PostgreSQL.
+  - packages/shared: strict TypeScript domain types, enums, constants, and utilities.
+
+  Backend changes preserve the route -> service -> Prisma/adapter boundary.
+  Routes own HTTP validation and authorization, services own application behavior
+  and persistence, and adapters map database records into @acs/shared contracts.
+  Relative ESM imports in backend and shared source retain their .js extensions.
+
+  Roles are PUBLIC, CYCLIST, ORGANIZER_STAFF, ORGANIZER_OWNER, and ADMIN.
+  Organizations own organizers and events. Events own races. Races select one
+  age, gender, and distance category and may have cyclist results.
+
+  Current behavior belongs in openspec/specs. Desired but unimplemented behavior
+  belongs in openspec/changes until it is implemented, verified, synced, and
+  archived. When legacy sources conflict, use this precedence: current code for
+  baseline specs; newest detailed archived feature spec for future behavior;
+  archived business documentation for uncovered product intent. Adapt all future
+  designs to Next.js/Hono/Prisma and do not revive SvelteKit/Supabase mechanics.
+  Financial, tax, security, and provider claims that can change over time require
+  authoritative revalidation before becoming implementation requirements.
+
+rules:
+  proposal:
+    - Include explicit non-goals and a Legacy provenance section when migrated material is used.
+    - Separate verified requirements from historical assumptions and unresolved research.
+  specs:
+    - Every requirement must use SHALL or MUST and include at least one WHEN/THEN scenario.
+    - Describe observable behavior and public contracts, not obsolete framework-specific mechanics.
+  design:
+    - Preserve current Next.js, Hono, Prisma, Better Auth, PostgreSQL, and npm workspace decisions.
+    - Identify data migration, authorization, failure-mode, and compatibility implications.
+  tasks:
+    - Include narrow automated checks plus npm run check and relevant lint/build verification.
+    - Treat database migrations, email delivery, payments, and tax behavior as stateful or high risk.
