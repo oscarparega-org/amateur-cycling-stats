@@ -26,6 +26,13 @@ Use npm and keep `package-lock.json` in sync when dependencies change.
 
 The current frontend has ESLint configured. Backend and shared lint scripts, and the frontend/backend test scripts, are placeholders. Do not report placeholder scripts as meaningful verification.
 
+## Branch Naming
+
+- Name branches by the type and purpose of the change using `<type>/<short-description>`.
+- Use one of these prefixes when applicable: `feat/`, `fix/`, `refactor/`, `chore/`, `docs/`, or `test/`.
+- Write the description in lowercase kebab-case, for example `feat/hono-authentication` or `chore/openspec-migration`.
+- Do not prefix branch names with an agent, tool, or author name such as `codex/` or `claude/`.
+
 ## Code and Architecture
 
 - Preserve strict TypeScript typing. Prefer explicit domain types and `unknown` with narrowing over `any`.
