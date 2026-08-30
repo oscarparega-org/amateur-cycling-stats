@@ -9,3 +9,7 @@ Monorepo for the current Amateur Cycling Stats frontend, backend, and shared pac
 - `apps/frontend` — current Next.js 16 and React 19 application
 - `apps/backend` — current Hono API
 - `packages/shared` — shared types and utilities
+
+## Deployment
+
+See [docs/deployment.md](docs/deployment.md) for the GitHub Actions and Coolify development deployment flow.
