@@ -27,7 +27,11 @@ export async function getOrganizationsByUserId(userId: string): Promise<Organiza
   return orgs.map(adaptOrganization);
 }
 
-export async function createOrganization(data: { name: string; description?: string }): Promise<Organization> {
+export async function createOrganization(data: {
+  name: string;
+  description?: string | null;
+  state?: Organization['state'];
+}): Promise<Organization> {
   const org = await prisma.organization.create({
     data,
     include: { _count: { select: { events: true } } }

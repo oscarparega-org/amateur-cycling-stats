@@ -23,7 +23,7 @@ export function SiteHeader({ initialSession }: { initialSession: AuthSession | n
     '/aceptar-invitacion',
     '/error-autenticacion'
   ];
-  if (authPaths.includes(pathname) || pathname.startsWith('/organizer')) return null;
+  if (authPaths.includes(pathname) || pathname.startsWith('/admin') || pathname.startsWith('/organizer')) return null;
 
   async function signOut() {
     setSigningOut(true);
