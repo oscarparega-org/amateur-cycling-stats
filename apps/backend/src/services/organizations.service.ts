@@ -18,6 +18,15 @@ export async function getOrganizationById(id: string): Promise<Organization | nu
   return org ? adaptOrganization(org) : null;
 }
 
+export async function getOrganizationsByUserId(userId: string): Promise<Organization[]> {
+  const orgs = await prisma.organization.findMany({
+    where: { organizers: { some: { userId } } },
+    include: { _count: { select: { events: true } } },
+    orderBy: { name: 'asc' }
+  });
+  return orgs.map(adaptOrganization);
+}
+
 export async function createOrganization(data: { name: string; description?: string }): Promise<Organization> {
   const org = await prisma.organization.create({
     data,

@@ -26,7 +26,7 @@ const createEventSchema = z
   .object({
     name: shortText,
     dateTime,
-    year: z.number().int().min(1800).max(2200),
+    year: z.number().int().min(1800).max(2200).optional(),
     country: shortText,
     state: shortText,
     city: z.string().trim().max(200).optional(),
@@ -81,7 +81,13 @@ events.post('/', async (c) => {
   } else {
     await requireRole(c, [RoleTypeEnum.ADMIN]);
   }
-  const event = await eventsService.createEvent({ ...body, createdBy: user.id });
+  const dateTime = new Date(body.dateTime);
+  const event = await eventsService.createEvent({
+    ...body,
+    dateTime: dateTime.toISOString(),
+    year: dateTime.getUTCFullYear(),
+    createdBy: user.id
+  });
   return c.json(event, 201);
 });
 
@@ -94,6 +100,11 @@ events.patch('/:id', async (c) => {
 
 events.delete('/:id', async (c) => {
   await requireEventOrgMember(c, c.req.param('id'));
+  const event = await eventsService.getEventById(c.req.param('id'), true);
+  if (!event) return c.json({ error: 'Not found' }, 404);
+  if (event.eventStatus !== 'DRAFT') {
+    return c.json({ error: 'Only draft events can be deleted' }, 409);
+  }
   const deleted = await eventsService.deleteEvent(c.req.param('id'));
   if (!deleted) return c.json({ error: 'Not found' }, 404);
   return c.json({ success: true });

@@ -451,6 +451,19 @@ describe('Hono authentication', () => {
     expect(forbidden.status).toBe(403);
   });
 
+  it('returns only the signed-in organizer context', async () => {
+    const organizerBrowser = await signIn('organizer@example.com', 'password123');
+
+    const context = await organizerBrowser(`${baseUrl}/api/organizers/me`);
+    expect(context.status).toBe(200);
+    const body = (await context.json()) as { organizations: { name: string }[] };
+    expect(body.organizations.map(({ name }) => name)).toContain('Pro Cycling League Spain');
+
+    const cyclistBrowser = await registerAndVerify('organizer-context-cyclist@example.com');
+    const forbidden = await cyclistBrowser(`${baseUrl}/api/organizers/me`);
+    expect(forbidden.status).toBe(403);
+  });
+
   it('derives event creators and invitation senders from the authenticated session', async () => {
     const browser = await signIn('organizer@example.com', 'password123');
     const organizer = await prisma.user.findUniqueOrThrow({ where: { email: 'organizer@example.com' } });
