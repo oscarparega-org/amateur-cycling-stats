@@ -2,9 +2,12 @@ import type { RaceResult } from '@acs/shared';
 import { prisma } from '../lib/prisma.js';
 import { adaptRaceResult, raceResultInclude } from '../adapters/race-results.adapter.js';
 
-export async function getRaceResultsByRaceId(raceId: string): Promise<RaceResult[]> {
+export async function getRaceResultsByRaceId(raceId: string, includePrivate = false): Promise<RaceResult[]> {
   const results = await prisma.raceResult.findMany({
-    where: { raceId },
+    where: {
+      raceId,
+      ...(includePrivate ? {} : { race: { isPublicVisible: true, event: { isPublicVisible: true } } })
+    },
     include: raceResultInclude,
     orderBy: { place: 'asc' }
   });
@@ -13,7 +16,10 @@ export async function getRaceResultsByRaceId(raceId: string): Promise<RaceResult
 
 export async function getRaceResultsByUserId(userId: string): Promise<RaceResult[]> {
   const results = await prisma.raceResult.findMany({
-    where: { cyclist: { userId } },
+    where: {
+      cyclist: { userId },
+      race: { isPublicVisible: true, event: { isPublicVisible: true } }
+    },
     include: raceResultInclude,
     orderBy: { createdAt: 'desc' }
   });

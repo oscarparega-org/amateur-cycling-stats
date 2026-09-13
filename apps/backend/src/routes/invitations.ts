@@ -1,11 +1,24 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import * as invitationsService from '../services/invitations.service.js';
 import { isAdmin, requireAuth, requireOrgMember } from '../lib/auth-helpers.js';
 import { auth } from '../lib/auth.js';
 import { prisma } from '../lib/prisma.js';
 import { setPendingInvitation } from '../lib/email.js';
+import { atLeastOneField, parseJson, uuid } from '../lib/validation.js';
 
 const invitations = new Hono();
+
+const createInvitationSchema = z
+  .object({
+    organizationId: uuid,
+    email: z.string().trim().toLowerCase().email().max(320)
+  })
+  .strict();
+
+const updateInvitationSchema = atLeastOneField({
+  status: z.enum(['PENDING', 'ACCEPTED', 'EXPIRED']).optional()
+});
 
 // GET — auth required
 invitations.get('/', async (c) => {
@@ -31,14 +44,12 @@ invitations.get('/', async (c) => {
 
 // POST — admin or organization member, then trigger magic link
 invitations.post('/', async (c) => {
-  const body = await c.req.json();
-  if (!body.organizationId || !body.email || !body.invitedByUserId) {
-    return c.json({ error: 'organizationId, email, and invitedByUserId are required' }, 400);
-  }
+  const user = requireAuth(c);
+  const body = await parseJson(c, createInvitationSchema);
   await requireOrgMember(c, body.organizationId);
 
   // Create invitation record
-  const invitation = await invitationsService.createInvitation(body);
+  const invitation = await invitationsService.createInvitation({ ...body, invitedByUserId: user.id });
 
   // Look up organization name for the invitation email
   const org = await prisma.organization.findUnique({ where: { id: body.organizationId } });
@@ -86,7 +97,10 @@ invitations.patch('/:id', async (c) => {
     }
   }
 
-  const invitation = await invitationsService.updateInvitation(c.req.param('id'), await c.req.json());
+  const invitation = await invitationsService.updateInvitation(
+    c.req.param('id'),
+    await parseJson(c, updateInvitationSchema)
+  );
   if (!invitation) return c.json({ error: 'Not found' }, 404);
   return c.json(invitation);
 });

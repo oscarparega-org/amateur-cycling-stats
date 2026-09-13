@@ -1,9 +1,16 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import * as organizersService from '../services/organizers.service.js';
 import { requireOrgMember } from '../lib/auth-helpers.js';
 import { prisma } from '../lib/prisma.js';
+import { atLeastOneField, parseJson } from '../lib/validation.js';
 
 const organizers = new Hono();
+
+const updateOrganizerSchema = atLeastOneField({
+  firstName: z.string().trim().min(1).max(200).optional(),
+  lastName: z.string().trim().min(1).max(200).optional()
+});
 
 // GET — public
 organizers.get('/', async (c) => {
@@ -24,7 +31,7 @@ organizers.patch('/:id', async (c) => {
   const organizer = await prisma.organizer.findUnique({ where: { id: c.req.param('id') } });
   if (!organizer) return c.json({ error: 'Not found' }, 404);
   await requireOrgMember(c, organizer.organizationId);
-  const body = await c.req.json();
+  const body = await parseJson(c, updateOrganizerSchema);
   const updated = await organizersService.updateOrganizer(c.req.param('id'), body);
   if (!updated) return c.json({ error: 'Not found' }, 404);
   return c.json(updated);

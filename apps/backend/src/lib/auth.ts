@@ -76,8 +76,8 @@ export function createAuth(
       additionalFields: {
         firstName: { type: 'string', required: false },
         lastName: { type: 'string', required: false },
-        roleId: { type: 'string', required: false },
-        status: { type: 'string', required: false, defaultValue: 'ACTIVE' }
+        roleId: { type: 'string', required: false, input: false },
+        status: { type: 'string', required: false, defaultValue: 'ACTIVE', input: false }
       }
     },
     databaseHooks: {
@@ -90,8 +90,10 @@ export function createAuth(
             return {
               data: {
                 ...user,
-                roleId: user.roleId || cyclistRole.id,
-                status: user.status || 'ACTIVE'
+                // These authorization fields are always server-owned. Do not
+                // preserve values supplied through an authentication payload.
+                roleId: cyclistRole.id,
+                status: 'ACTIVE'
               }
             };
           },

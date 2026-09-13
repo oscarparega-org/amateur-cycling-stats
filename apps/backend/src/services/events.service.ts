@@ -33,9 +33,11 @@ export async function getPastEvents(year?: number): Promise<Event[]> {
 
 export async function getEventsByOrganization(
   organizationId: string,
-  filter?: 'all' | 'future' | 'past'
+  filter?: 'all' | 'future' | 'past',
+  includePrivate = false
 ): Promise<Event[]> {
   const where: Record<string, unknown> = { organizationId };
+  if (!includePrivate) where.isPublicVisible = true;
   if (filter === 'future') where.dateTime = { gte: new Date() };
   else if (filter === 'past') where.dateTime = { lt: new Date() };
   const events = await prisma.event.findMany({
@@ -48,10 +50,10 @@ export async function getEventsByOrganization(
 // Note: The `Event` domain type has no `races` field. The spec mentions
 // "event with races" but this is handled by fetching races separately
 // via GET /api/races?eventId=xxx. This keeps the Event type flat.
-export async function getEventById(id: string): Promise<EventWithOrganization | null> {
+export async function getEventById(id: string, includePrivate = false): Promise<EventWithOrganization | null> {
   if (!uuidPattern.test(id)) return null;
-  const event = await prisma.event.findUnique({
-    where: { id },
+  const event = await prisma.event.findFirst({
+    where: { id, ...(includePrivate ? {} : { isPublicVisible: true }) },
     include: { organization: { select: { name: true } } }
   });
   return event ? adaptEventWithOrganization(event) : null;

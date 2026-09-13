@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const prismaMocks = vi.hoisted(() => ({
   findMany: vi.fn(),
-  findUnique: vi.fn()
+  findFirst: vi.fn()
 }));
 
 vi.mock('../../src/lib/prisma.js', () => ({
@@ -57,15 +57,20 @@ describe('events service public reads', () => {
   });
 
   it('returns a null organizer name for independent events', async () => {
-    prismaMocks.findUnique.mockResolvedValue(databaseEvent({ organization: null, organizationId: null }));
+    prismaMocks.findFirst.mockResolvedValue(databaseEvent({ organization: null, organizationId: null }));
 
     await expect(getEventById('00000000-0000-4000-8000-000000000001')).resolves.toMatchObject({
       organizationName: null
     });
+    expect(prismaMocks.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: '00000000-0000-4000-8000-000000000001', isPublicVisible: true }
+      })
+    );
   });
 
   it('returns null for an invalid event identifier without querying the database', async () => {
     await expect(getEventById('not-an-event-id')).resolves.toBeNull();
-    expect(prismaMocks.findUnique).not.toHaveBeenCalled();
+    expect(prismaMocks.findFirst).not.toHaveBeenCalled();
   });
 });

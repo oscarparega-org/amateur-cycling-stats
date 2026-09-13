@@ -103,6 +103,13 @@ async function registerAndVerify(email: string, password = 'password1234') {
   return browser;
 }
 
+async function signIn(email: string, password: string) {
+  const browser = client();
+  const response = await post(browser, '/api/auth/sign-in/email', { email, password });
+  expect(response.status).toBe(200);
+  return browser;
+}
+
 async function signInWithGoogle(browser: ReturnType<typeof client>, email: string) {
   googleEmail = email;
   const start = await post(browser, '/api/auth/sign-in/social', {
@@ -303,6 +310,21 @@ describe('Hono authentication', () => {
     expect(await (await browser(`${baseUrl}/api/auth/get-session`)).json()).toBeNull();
   });
 
+  it('rejects role and status fields supplied during public signup', async () => {
+    const email = 'role-injection@example.com';
+    const adminRole = await prisma.role.findUniqueOrThrow({ where: { name: 'ADMIN' } });
+    const signup = await post(client(), '/api/auth/sign-up/email', {
+      name: 'Injected Admin',
+      email,
+      password: 'password1234',
+      roleId: adminRole.id,
+      status: 'INACTIVE',
+      callbackURL: `${baseUrl}/verified`
+    });
+    expect(signup.status).toBe(400);
+    expect(await prisma.user.findUnique({ where: { email } })).toBeNull();
+  });
+
   it('uses non-enumerating reset responses, changes the password, and revokes sessions', async () => {
     const email = 'password-reset@example.com';
     const browser = await registerAndVerify(email);
@@ -417,7 +439,6 @@ describe('Hono authentication', () => {
     expect(authenticated.status).toBe(400);
 
     const organization = await prisma.organization.create({ data: { name: 'Restricted Org' } });
-    const cyclist = await prisma.user.findUniqueOrThrow({ where: { email: 'authorization@example.com' } });
     const forbidden = await post(browser, '/api/events', {
       name: 'Private Event',
       description: '',
@@ -425,9 +446,175 @@ describe('Hono authentication', () => {
       year: new Date().getFullYear(),
       country: 'MX',
       state: 'CDMX',
-      organizationId: organization.id,
-      createdBy: cyclist.id
+      organizationId: organization.id
     });
     expect(forbidden.status).toBe(403);
+  });
+
+  it('derives event creators and invitation senders from the authenticated session', async () => {
+    const browser = await signIn('organizer@example.com', 'password123');
+    const organizer = await prisma.user.findUniqueOrThrow({ where: { email: 'organizer@example.com' } });
+    const admin = await prisma.user.findUniqueOrThrow({ where: { email: 'admin@acs.com' } });
+    const organization = await prisma.organization.findUniqueOrThrow({
+      where: { id: '20000000-0000-4000-8000-000000000001' }
+    });
+    const eventInput = {
+      name: 'Session-owned event',
+      dateTime: new Date(Date.now() + 86_400_000).toISOString(),
+      year: new Date().getFullYear(),
+      country: 'MX',
+      state: 'CDMX',
+      organizationId: organization.id
+    };
+
+    const overpostedEvent = await post(browser, '/api/events', { ...eventInput, createdBy: admin.id });
+    expect(overpostedEvent.status).toBe(400);
+    expect(await overpostedEvent.json()).toMatchObject({ code: 'VALIDATION_ERROR' });
+
+    const createdEvent = await post(browser, '/api/events', eventInput);
+    expect(createdEvent.status).toBe(201);
+    const eventPayload = (await createdEvent.json()) as { id: string; createdBy: string };
+    expect(eventPayload.createdBy).toBe(organizer.id);
+    expect((await prisma.event.findUniqueOrThrow({ where: { id: eventPayload.id } })).createdBy).toBe(organizer.id);
+
+    const overpostedInvitation = await post(browser, '/api/invitations', {
+      organizationId: organization.id,
+      email: 'overposted-invitation@example.com',
+      invitedByUserId: admin.id
+    });
+    expect(overpostedInvitation.status).toBe(400);
+
+    const createdInvitation = await post(browser, '/api/invitations', {
+      organizationId: organization.id,
+      email: 'session-invitation@example.com'
+    });
+    expect(createdInvitation.status).toBe(201);
+    const invitationPayload = (await createdInvitation.json()) as { id: string; invitedByUserId: string };
+    expect(invitationPayload.invitedByUserId).toBe(organizer.id);
+    expect(
+      (await prisma.organizationInvitation.findUniqueOrThrow({ where: { id: invitationPayload.id } })).invitedByUserId
+    ).toBe(organizer.id);
+  });
+
+  it('keeps private events, races, and results out of public responses', async () => {
+    const organizationId = '20000000-0000-4000-8000-000000000001';
+    const creator = await prisma.user.findUniqueOrThrow({ where: { email: 'organizer@example.com' } });
+    const cyclistUser = await prisma.user.findUniqueOrThrow({
+      where: { email: 'cyclist1@example.com' },
+      include: { cyclist: true }
+    });
+    const [ages, gender, distance] = await Promise.all([
+      prisma.raceCategory.findMany({ take: 2, orderBy: { name: 'asc' } }),
+      prisma.raceCategoryGender.findFirstOrThrow(),
+      prisma.raceCategoryLength.findFirstOrThrow()
+    ]);
+    expect(ages).toHaveLength(2);
+    const dateTime = new Date(Date.now() + 172_800_000);
+    const [publicEvent, privateEvent] = await Promise.all([
+      prisma.event.create({
+        data: {
+          name: 'Public visibility event',
+          dateTime,
+          year: dateTime.getFullYear(),
+          country: 'MX',
+          state: 'Jalisco',
+          isPublicVisible: true,
+          createdBy: creator.id,
+          organizationId
+        }
+      }),
+      prisma.event.create({
+        data: {
+          name: 'Private visibility event',
+          dateTime,
+          year: dateTime.getFullYear(),
+          country: 'MX',
+          state: 'Jalisco',
+          isPublicVisible: false,
+          createdBy: creator.id,
+          organizationId
+        }
+      })
+    ]);
+    const [publicRace, privateRace, privateEventRace] = await Promise.all([
+      prisma.race.create({
+        data: {
+          eventId: publicEvent.id,
+          dateTime,
+          raceCategoryAgeId: ages[0]!.id,
+          raceCategoryGenderId: gender.id,
+          raceCategoryDistanceId: distance.id,
+          isPublicVisible: true
+        }
+      }),
+      prisma.race.create({
+        data: {
+          eventId: publicEvent.id,
+          dateTime,
+          raceCategoryAgeId: ages[1]!.id,
+          raceCategoryGenderId: gender.id,
+          raceCategoryDistanceId: distance.id,
+          isPublicVisible: false
+        }
+      }),
+      prisma.race.create({
+        data: {
+          eventId: privateEvent.id,
+          dateTime,
+          raceCategoryAgeId: ages[0]!.id,
+          raceCategoryGenderId: gender.id,
+          raceCategoryDistanceId: distance.id,
+          isPublicVisible: true
+        }
+      })
+    ]);
+    await prisma.raceResult.createMany({
+      data: [publicRace, privateRace, privateEventRace].map((race, index) => ({
+        raceId: race.id,
+        cyclistId: cyclistUser.cyclist!.id,
+        place: index + 1
+      }))
+    });
+
+    const publicEvents = (await (
+      await fetch(`${baseUrl}/api/events?organizationId=${organizationId}&filter=all`)
+    ).json()) as Array<{ id: string }>;
+    expect(publicEvents.map(({ id }) => id)).toContain(publicEvent.id);
+    expect(publicEvents.map(({ id }) => id)).not.toContain(privateEvent.id);
+    expect((await fetch(`${baseUrl}/api/events/${privateEvent.id}`)).status).toBe(404);
+
+    const publicRaces = (await (await fetch(`${baseUrl}/api/races?eventId=${publicEvent.id}`)).json()) as Array<{
+      id: string;
+    }>;
+    expect(publicRaces.map(({ id }) => id)).toContain(publicRace.id);
+    expect(publicRaces.map(({ id }) => id)).not.toContain(privateRace.id);
+    expect((await fetch(`${baseUrl}/api/races/${privateRace.id}`)).status).toBe(404);
+    expect((await fetch(`${baseUrl}/api/races/${privateEventRace.id}`)).status).toBe(404);
+
+    expect(
+      ((await (await fetch(`${baseUrl}/api/race-results?raceId=${privateRace.id}`)).json()) as unknown[]).length
+    ).toBe(0);
+    expect(
+      ((await (await fetch(`${baseUrl}/api/race-results?raceId=${privateEventRace.id}`)).json()) as unknown[]).length
+    ).toBe(0);
+    const publicUserResults = (await (
+      await fetch(`${baseUrl}/api/race-results?userId=${cyclistUser.id}`)
+    ).json()) as Array<{ raceId: string }>;
+    expect(publicUserResults.map(({ raceId }) => raceId)).toEqual([publicRace.id]);
+
+    const organizerBrowser = await signIn('organizer@example.com', 'password123');
+    const managedEvents = (await (
+      await organizerBrowser(`${baseUrl}/api/events?organizationId=${organizationId}&filter=all`)
+    ).json()) as Array<{ id: string }>;
+    expect(managedEvents.map(({ id }) => id)).toEqual(expect.arrayContaining([publicEvent.id, privateEvent.id]));
+    expect((await organizerBrowser(`${baseUrl}/api/events/${privateEvent.id}`)).status).toBe(200);
+    expect((await organizerBrowser(`${baseUrl}/api/races/${privateRace.id}`)).status).toBe(200);
+    expect(
+      (
+        (await (
+          await organizerBrowser(`${baseUrl}/api/race-results?raceId=${privateEventRace.id}`)
+        ).json()) as unknown[]
+      ).length
+    ).toBe(1);
   });
 });

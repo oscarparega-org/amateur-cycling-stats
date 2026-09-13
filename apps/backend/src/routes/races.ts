@@ -1,38 +1,59 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import * as racesService from '../services/races.service.js';
-import { requireEventOrgMember } from '../lib/auth-helpers.js';
+import { canManageEvent, canManageRace, requireEventOrgMember } from '../lib/auth-helpers.js';
 import { prisma } from '../lib/prisma.js';
+import {
+  atLeastOneField,
+  dateTime,
+  nullableOptionalText,
+  optionalText,
+  parseJson,
+  shortText,
+  uuid
+} from '../lib/validation.js';
 
 const races = new Hono();
+
+const createRaceSchema = z
+  .object({
+    eventId: uuid,
+    raceCategoryAgeId: uuid,
+    raceCategoryGenderId: uuid,
+    raceCategoryDistanceId: uuid,
+    dateTime,
+    name: shortText.optional(),
+    description: optionalText
+  })
+  .strict();
+
+const updateRaceSchema = atLeastOneField({
+  name: z.string().trim().max(200).nullable().optional(),
+  description: nullableOptionalText,
+  dateTime: dateTime.optional(),
+  raceCategoryAgeId: uuid.optional(),
+  raceCategoryGenderId: uuid.optional(),
+  raceCategoryDistanceId: uuid.optional(),
+  isPublicVisible: z.boolean().optional()
+});
 
 // GET endpoints — public
 races.get('/', async (c) => {
   const eventId = c.req.query('eventId');
   if (!eventId) return c.json({ error: 'eventId query param is required' }, 400);
-  return c.json(await racesService.getRacesByEventId(eventId));
+  return c.json(await racesService.getRacesByEventId(eventId, await canManageEvent(c, eventId)));
 });
 
 races.get('/:id', async (c) => {
-  const race = await racesService.getRaceById(c.req.param('id'));
+  const id = c.req.param('id');
+  const race = await racesService.getRaceById(id, await canManageRace(c, id));
   if (!race) return c.json({ error: 'Not found' }, 404);
   return c.json(race);
 });
 
 // Write endpoints — require event org membership or admin
 races.post('/', async (c) => {
-  const body = await c.req.json();
-  if (
-    !body.eventId ||
-    !body.raceCategoryAgeId ||
-    !body.raceCategoryGenderId ||
-    !body.raceCategoryDistanceId ||
-    !body.dateTime
-  ) {
-    return c.json(
-      { error: 'eventId, raceCategoryAgeId, raceCategoryGenderId, raceCategoryDistanceId, and dateTime are required' },
-      400
-    );
-  }
+  const body = await parseJson(c, createRaceSchema);
   await requireEventOrgMember(c, body.eventId);
   try {
     const race = await racesService.createRace(body);
@@ -49,7 +70,7 @@ races.patch('/:id', async (c) => {
   const race = await prisma.race.findUnique({ where: { id: c.req.param('id') } });
   if (!race) return c.json({ error: 'Not found' }, 404);
   await requireEventOrgMember(c, race.eventId);
-  const updated = await racesService.updateRace(c.req.param('id'), await c.req.json());
+  const updated = await racesService.updateRace(c.req.param('id'), await parseJson(c, updateRaceSchema));
   if (!updated) return c.json({ error: 'Not found' }, 404);
   return c.json(updated);
 });

@@ -3,8 +3,19 @@ import { requireAuth } from '../lib/auth-helpers.js';
 import { prisma } from '../lib/prisma.js';
 import { RoleTypeEnum } from '@acs/shared';
 import { hashPassword } from 'better-auth/crypto';
+import { z } from 'zod';
+import { parseJson, uuid } from '../lib/validation.js';
 
 const authSetup = new Hono();
+
+const completeOrganizerSetupSchema = z
+  .object({
+    firstName: z.string().trim().min(1).max(200),
+    lastName: z.string().trim().min(1).max(200),
+    password: z.string(),
+    invitationId: uuid
+  })
+  .strict();
 
 /**
  * POST /api/auth/complete-organizer-setup
@@ -13,12 +24,8 @@ const authSetup = new Hono();
  */
 authSetup.post('/complete-organizer-setup', async (c) => {
   const user = requireAuth(c);
-  const body = await c.req.json();
-
-  if (!body.firstName || !body.lastName || !body.password || !body.invitationId) {
-    return c.json({ error: 'firstName, lastName, password, and invitationId are required' }, 400);
-  }
-  if (typeof body.password !== 'string' || body.password.length < 8) {
+  const body = await parseJson(c, completeOrganizerSetupSchema);
+  if (body.password.length < 8) {
     return c.json({ error: 'Password must contain at least 8 characters', code: 'PASSWORD_TOO_SHORT' }, 400);
   }
   if (body.password.length > 128) {
