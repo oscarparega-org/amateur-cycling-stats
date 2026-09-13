@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Route } from 'next';
 import { notFound } from 'next/navigation';
 import { updateEventAction } from '@/app/organizer/actions';
 import { EventForm } from '@/components/organizer/event-form';
@@ -17,7 +18,7 @@ export default async function EditEventPage({
     <>
       <Link
         className="mb-5 inline-block font-semibold text-blue-700 hover:text-blue-900"
-        href={`/organizer/${organizationId}/events/${eventId}`}
+        href={`/organizer/${organizationId}/events/${eventId}` as Route}
       >
         ← Volver al evento
       </Link>
