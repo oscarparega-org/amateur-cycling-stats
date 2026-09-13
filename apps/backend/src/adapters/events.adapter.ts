@@ -1,5 +1,9 @@
-import type { Event } from '@acs/shared';
+import type { Event, EventWithOrganization } from '@acs/shared';
 import type { Event as PrismaEvent } from '@prisma/client';
+
+type PrismaEventWithOrganization = PrismaEvent & {
+  organization: { name: string } | null;
+};
 
 export function adaptEvent(event: PrismaEvent): Event {
   return {
@@ -17,5 +21,12 @@ export function adaptEvent(event: PrismaEvent): Event {
     isPublicVisible: event.isPublicVisible,
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString()
+  };
+}
+
+export function adaptEventWithOrganization(event: PrismaEventWithOrganization): EventWithOrganization {
+  return {
+    ...adaptEvent(event),
+    organizationName: event.organization?.name ?? null
   };
 }

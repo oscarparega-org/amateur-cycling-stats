@@ -2,7 +2,7 @@ export type { Admin } from './admin.domain.js';
 export type { Organizer, PartialOrganizer } from './organizer.domain.js';
 export type { Cyclist } from './cyclist.domain.js';
 export type { User } from './user.domain.js';
-export type { Event } from './event.domain.js';
+export type { Event, EventWithOrganization } from './event.domain.js';
 export type { Race } from './race.domain.js';
 export type { RaceResult } from './race-result.domain.js';
 export type { Organization, PartialOrganization } from './organization.domain.js';

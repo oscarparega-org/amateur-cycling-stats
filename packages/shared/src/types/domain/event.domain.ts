@@ -16,3 +16,7 @@ export interface Event {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface EventWithOrganization extends Event {
+  organizationName: string | null;
+}

@@ -1,13 +1,21 @@
-import type { Event } from '@acs/shared';
+import type { Event, EventWithOrganization } from '@acs/shared';
+import { EventStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
-import { adaptEvent } from '../adapters/events.adapter.js';
+import { adaptEvent, adaptEventWithOrganization } from '../adapters/events.adapter.js';
 
-export async function getFutureEvents(): Promise<Event[]> {
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function getFutureEvents(): Promise<EventWithOrganization[]> {
   const events = await prisma.event.findMany({
-    where: { isPublicVisible: true, dateTime: { gte: new Date() } },
+    where: {
+      isPublicVisible: true,
+      dateTime: { gte: new Date() },
+      eventStatus: { in: [EventStatus.AVAILABLE, EventStatus.SOLD_OUT] }
+    },
+    include: { organization: { select: { name: true } } },
     orderBy: { dateTime: 'asc' }
   });
-  return events.map(adaptEvent);
+  return events.map(adaptEventWithOrganization);
 }
 
 export async function getPastEvents(year?: number): Promise<Event[]> {
@@ -40,9 +48,13 @@ export async function getEventsByOrganization(
 // Note: The `Event` domain type has no `races` field. The spec mentions
 // "event with races" but this is handled by fetching races separately
 // via GET /api/races?eventId=xxx. This keeps the Event type flat.
-export async function getEventById(id: string): Promise<Event | null> {
-  const event = await prisma.event.findUnique({ where: { id } });
-  return event ? adaptEvent(event) : null;
+export async function getEventById(id: string): Promise<EventWithOrganization | null> {
+  if (!uuidPattern.test(id)) return null;
+  const event = await prisma.event.findUnique({
+    where: { id },
+    include: { organization: { select: { name: true } } }
+  });
+  return event ? adaptEventWithOrganization(event) : null;
 }
 
 export async function createEvent(data: {
