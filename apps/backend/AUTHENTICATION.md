@@ -16,6 +16,11 @@ https://app.example.com/api/auth/callback/google
 it may point directly to Hono locally; once the Next.js BFF is added it must point
 to the BFF origin.
 
+The frontend proxies `/api/auth/*` to Hono. Configure `BETTER_AUTH_URL` with the
+frontend origin (for example `http://localhost:5173`) and keep `API_URL` pointed
+at Hono (`http://localhost:3000`). The browser stores the session cookie for the
+frontend origin, and server-side frontend requests forward it to Hono.
+
 ## Verification
 
 ```bash

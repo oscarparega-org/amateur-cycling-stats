@@ -60,9 +60,9 @@ export function createAuth(options: {
       sendMagicLink: async ({ email, url }) => {
         const pending = consumePendingInvitation(email);
         if (pending) {
-          await sendEmail({ to: email, ...invitationEmail(url, pending.organizationName) });
+          await emailSender({ to: email, ...invitationEmail(url, pending.organizationName) });
         } else {
-          await sendEmail({ to: email, ...magicLinkEmail(url) });
+          await emailSender({ to: email, ...magicLinkEmail(url) });
         }
       }
     })
