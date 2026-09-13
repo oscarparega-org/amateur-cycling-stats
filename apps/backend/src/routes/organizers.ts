@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import * as organizersService from '../services/organizers.service.js';
-import { requireOrgMember } from '../lib/auth-helpers.js';
+import { requireOrgMember, requireRole } from '../lib/auth-helpers.js';
 import { prisma } from '../lib/prisma.js';
+import { RoleTypeEnum } from '@acs/shared';
+import { getOrganizationsByUserId } from '../services/organizations.service.js';
 import { atLeastOneField, parseJson } from '../lib/validation.js';
 
 const organizers = new Hono();
@@ -10,6 +12,12 @@ const organizers = new Hono();
 const updateOrganizerSchema = atLeastOneField({
   firstName: z.string().trim().min(1).max(200).optional(),
   lastName: z.string().trim().min(1).max(200).optional()
+});
+
+// GET the organizations available to the signed-in organizer.
+organizers.get('/me', async (c) => {
+  const user = await requireRole(c, [RoleTypeEnum.ORGANIZER]);
+  return c.json({ organizations: await getOrganizationsByUserId(user.id) });
 });
 
 // GET — public

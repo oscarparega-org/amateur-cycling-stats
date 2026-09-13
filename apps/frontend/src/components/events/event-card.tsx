@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Route } from 'next';
 import type { EventWithOrganization } from '@acs/shared';
 import { eventDateParts, formatEventLocation } from '@/lib/event-format';
 import { EventStatus } from './event-status';
@@ -11,7 +12,7 @@ export function EventCard({ event }: { event: EventWithOrganization }) {
     <article className="border-t border-slate-300 last:border-b">
       <Link
         className="group grid gap-5 py-6 focus-visible:outline-offset-[-3px] sm:grid-cols-[7rem_1fr_auto] sm:items-center sm:gap-7 sm:py-8"
-        href={`/eventos/${event.id}`}
+        href={`/eventos/${event.id}` as Route}
       >
         <time
           className="flex h-[5.5rem] w-[5.5rem] shrink-0 flex-col items-center justify-center border-2 border-[#102a43] bg-[#f97316] text-[#102a43] shadow-[5px_5px_0_#102a43] sm:h-24 sm:w-24"
