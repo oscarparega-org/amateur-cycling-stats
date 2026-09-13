@@ -1,5 +1,5 @@
 import type { OrganizationInvitation } from '@acs/shared';
-import type { InvitationRoleType, InvitationStatus } from '@prisma/client';
+import type { InvitationStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { adaptInvitation } from '../adapters/invitations.adapter.js';
 
@@ -22,14 +22,13 @@ export async function createInvitation(data: {
   organizationId: string;
   email: string;
   invitedByUserId: string;
-  roleType: 'ORGANIZER_OWNER' | 'ORGANIZER_STAFF';
 }): Promise<OrganizationInvitation> {
   const invitation = await prisma.organizationInvitation.create({
     data: {
       organizationId: data.organizationId,
       email: data.email,
       invitedByUserId: data.invitedByUserId,
-      roleType: data.roleType as InvitationRoleType
+      roleType: 'ORGANIZER'
     }
   });
   return adaptInvitation(invitation);

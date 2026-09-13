@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import * as orgService from '../services/organizations.service.js';
-import { requireRole, requireOrgOwner } from '../lib/auth-helpers.js';
+import { requireRole, requireOrgMember } from '../lib/auth-helpers.js';
 import { RoleTypeEnum } from '@acs/shared';
 
 const organizations = new Hono();
@@ -26,9 +26,9 @@ organizations.post('/', async (c) => {
   return c.json(org, 201);
 });
 
-// PATCH — admin or org owner
+// PATCH — admin or organization member
 organizations.patch('/:id', async (c) => {
-  await requireOrgOwner(c, c.req.param('id'));
+  await requireOrgMember(c, c.req.param('id'));
   const body = await c.req.json();
   const org = await orgService.updateOrganization(c.req.param('id'), body);
   if (!org) return c.json({ error: 'Not found' }, 404);

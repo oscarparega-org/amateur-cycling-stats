@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import * as invitationsService from '../services/invitations.service.js';
-import { isAdmin, requireAuth, requireOrgOwner } from '../lib/auth-helpers.js';
+import { isAdmin, requireAuth, requireOrgMember } from '../lib/auth-helpers.js';
 import { auth } from '../lib/auth.js';
 import { prisma } from '../lib/prisma.js';
 import { setPendingInvitation } from '../lib/email.js';
@@ -13,7 +13,7 @@ invitations.get('/', async (c) => {
   const email = c.req.query('email');
 
   if (organizationId) {
-    await requireOrgOwner(c, organizationId);
+    await requireOrgMember(c, organizationId);
     return c.json(await invitationsService.getInvitationsByOrganizationId(organizationId));
   }
   if (email) {
@@ -29,13 +29,13 @@ invitations.get('/', async (c) => {
   return c.json({ error: 'organizationId or email query param is required' }, 400);
 });
 
-// POST — admin or org owner, then trigger magic link
+// POST — admin or organization member, then trigger magic link
 invitations.post('/', async (c) => {
   const body = await c.req.json();
-  if (!body.organizationId || !body.email || !body.invitedByUserId || !body.roleType) {
-    return c.json({ error: 'organizationId, email, invitedByUserId, and roleType are required' }, 400);
+  if (!body.organizationId || !body.email || !body.invitedByUserId) {
+    return c.json({ error: 'organizationId, email, and invitedByUserId are required' }, 400);
   }
-  await requireOrgOwner(c, body.organizationId);
+  await requireOrgMember(c, body.organizationId);
 
   // Create invitation record
   const invitation = await invitationsService.createInvitation(body);
@@ -69,7 +69,7 @@ invitations.post('/', async (c) => {
   return c.json(invitation, 201);
 });
 
-// PATCH — admin, org owner, or invited user (accept only)
+// PATCH — admin, organization member, or invited user (accept only)
 invitations.patch('/:id', async (c) => {
   const user = requireAuth(c);
   const existing = await prisma.organizationInvitation.findUnique({ where: { id: c.req.param('id') } });
@@ -78,9 +78,9 @@ invitations.patch('/:id', async (c) => {
   const admin = await isAdmin(c);
   const isInvitedUser = user.email === existing.email;
   if (!admin && !isInvitedUser) {
-    // Check if org owner
+    // Check if organization member
     try {
-      await requireOrgOwner(c, existing.organizationId);
+      await requireOrgMember(c, existing.organizationId);
     } catch {
       return c.json({ error: 'Forbidden' }, 403);
     }
@@ -91,7 +91,7 @@ invitations.patch('/:id', async (c) => {
   return c.json(invitation);
 });
 
-// DELETE — admin, org owner, or invited user (reject)
+// DELETE — admin, organization member, or invited user (reject)
 invitations.delete('/:id', async (c) => {
   const user = requireAuth(c);
   const existing = await prisma.organizationInvitation.findUnique({ where: { id: c.req.param('id') } });
@@ -101,7 +101,7 @@ invitations.delete('/:id', async (c) => {
   const isInvitedUser = user.email === existing.email;
   if (!admin && !isInvitedUser) {
     try {
-      await requireOrgOwner(c, existing.organizationId);
+      await requireOrgMember(c, existing.organizationId);
     } catch {
       return c.json({ error: 'Forbidden' }, 403);
     }

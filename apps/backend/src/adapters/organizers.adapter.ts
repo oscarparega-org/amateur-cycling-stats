@@ -6,16 +6,9 @@ type PrismaOrganizerWithRelations = PrismaOrganizer & {
   user: User & { role: Role | null };
 };
 
-// Role names in seed data are exact uppercase: 'ORGANIZER_OWNER', 'ORGANIZER_STAFF'
-// matching RoleTypeEnum values. Validated here with explicit check.
 export function adaptOrganizer(org: PrismaOrganizerWithRelations): Organizer {
   const roleName = org.user.role?.name;
-  let roleType: RoleTypeEnum.ORGANIZER_OWNER | RoleTypeEnum.ORGANIZER_STAFF;
-  if (roleName === RoleTypeEnum.ORGANIZER_OWNER) {
-    roleType = RoleTypeEnum.ORGANIZER_OWNER;
-  } else if (roleName === RoleTypeEnum.ORGANIZER_STAFF) {
-    roleType = RoleTypeEnum.ORGANIZER_STAFF;
-  } else {
+  if (roleName !== RoleTypeEnum.ORGANIZER) {
     throw new Error(`Unexpected organizer role: ${roleName}`);
   }
   return {
@@ -23,7 +16,7 @@ export function adaptOrganizer(org: PrismaOrganizerWithRelations): Organizer {
     firstName: org.user.firstName ?? '',
     lastName: org.user.lastName ?? '',
     email: org.user.email ?? '',
-    roleType,
+    roleType: RoleTypeEnum.ORGANIZER,
     organizationId: org.organizationId,
     status: org.user.status,
     createdAt: org.createdAt.toISOString(),

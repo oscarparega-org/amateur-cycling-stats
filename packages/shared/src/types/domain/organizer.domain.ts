@@ -6,11 +6,11 @@ export interface Organizer {
   firstName: string;
   lastName: string;
   email: string;
-  roleType: RoleTypeEnum.ORGANIZER_OWNER | RoleTypeEnum.ORGANIZER_STAFF;
+  roleType: RoleTypeEnum.ORGANIZER;
   organizationId: string;
   status: UserStatus;
   createdAt: string;
   updatedAt: string;
 }
 
-export type PartialOrganizer = Partial<Pick<Organizer, 'firstName' | 'lastName' | 'roleType'>>;
+export type PartialOrganizer = Partial<Pick<Organizer, 'firstName' | 'lastName'>>;
