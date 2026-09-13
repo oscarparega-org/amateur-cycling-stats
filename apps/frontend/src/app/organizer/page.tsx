@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import type { Route } from 'next';
 import { getServerSession } from '@/lib/backend';
 import { getOrganizerOrganizations } from '@/lib/organizer';
 
@@ -13,7 +14,7 @@ export default async function OrganizerEntryPage() {
   } catch {
     redirect('/');
   }
-  if (organizations[0]) redirect(`/organizer/${organizations[0].id}`);
+  if (organizations[0]) redirect(`/organizer/${organizations[0].id}` as Route);
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-24 text-center">

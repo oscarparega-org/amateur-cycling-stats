@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Route } from 'next';
 import { PageHeading } from '@/components/organizer/page-heading';
 import { StatusBadge } from '@/components/organizer/status-badge';
 import { getOrganizationEvents, type EventFilter } from '@/lib/organizer';
@@ -40,7 +41,7 @@ export default async function EventsPage({
         action={
           <Link
             className="rounded-md bg-[#2563eb] px-5 py-3 font-bold text-white hover:bg-blue-700"
-            href={`/organizer/${organizationId}/events/new`}
+            href={`/organizer/${organizationId}/events/new` as Route}
           >
             Crear evento
           </Link>
@@ -60,9 +61,9 @@ export default async function EventsPage({
                 : 'rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-slate-500'
             }
             href={
-              item.id === 'all'
+              (item.id === 'all'
                 ? `/organizer/${organizationId}/events`
-                : `/organizer/${organizationId}/events?filter=${item.id}`
+                : `/organizer/${organizationId}/events?filter=${item.id}`) as Route
             }
             key={item.id}
           >
@@ -88,7 +89,7 @@ export default async function EventsPage({
             return (
               <Link
                 className="group grid gap-4 border-b border-slate-200 px-5 py-5 last:border-0 hover:bg-blue-50/50 md:grid-cols-[6rem_1fr_10rem_9rem] md:items-center"
-                href={`/organizer/${organizationId}/events/${event.id}`}
+                href={`/organizer/${organizationId}/events/${event.id}` as Route}
                 key={event.id}
               >
                 <span className="flex w-fit items-baseline gap-2 border-l-4 border-[#f97316] pl-3 md:block">

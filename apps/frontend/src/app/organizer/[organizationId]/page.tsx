@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Route } from 'next';
 import { notFound } from 'next/navigation';
 import { PageHeading } from '@/components/organizer/page-heading';
 import { getOrganization } from '@/lib/organizer';
@@ -20,7 +21,7 @@ export default async function OrganizationOverviewPage({ params }: { params: Pro
         action={
           <Link
             className="rounded-md bg-[#2563eb] px-5 py-3 font-bold text-white hover:bg-blue-700"
-            href={`/organizer/${organizationId}/events/new`}
+            href={`/organizer/${organizationId}/events/new` as Route}
           >
             Crear evento
           </Link>
@@ -63,7 +64,7 @@ export default async function OrganizationOverviewPage({ params }: { params: Pro
             <p className="display-font mt-3 text-7xl font-semibold leading-none">{organization.eventCount ?? 0}</p>
             <Link
               className="mt-8 inline-flex border-b border-[#f97316] pb-1 font-bold text-white"
-              href={`/organizer/${organizationId}/events`}
+              href={`/organizer/${organizationId}/events` as Route}
             >
               Gestionar eventos
             </Link>
