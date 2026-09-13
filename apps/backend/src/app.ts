@@ -20,8 +20,8 @@ export function createApp(auth: AuthInstance = defaultAuth) {
       credentials: true
     })
   );
-  app.use('*', errorHandler);
   app.use('*', createSessionMiddleware(auth));
+  app.onError(errorHandler);
 
   registerRoutes(app);
   app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw));

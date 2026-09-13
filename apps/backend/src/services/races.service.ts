@@ -2,18 +2,24 @@ import type { Race } from '@acs/shared';
 import { prisma } from '../lib/prisma.js';
 import { adaptRace, raceInclude } from '../adapters/races.adapter.js';
 
-export async function getRacesByEventId(eventId: string): Promise<Race[]> {
+export async function getRacesByEventId(eventId: string, includePrivate = false): Promise<Race[]> {
   const races = await prisma.race.findMany({
-    where: { eventId },
+    where: {
+      eventId,
+      ...(includePrivate ? {} : { isPublicVisible: true, event: { isPublicVisible: true } })
+    },
     include: raceInclude,
     orderBy: { dateTime: 'asc' }
   });
   return races.map(adaptRace);
 }
 
-export async function getRaceById(id: string): Promise<Race | null> {
-  const race = await prisma.race.findUnique({
-    where: { id },
+export async function getRaceById(id: string, includePrivate = false): Promise<Race | null> {
+  const race = await prisma.race.findFirst({
+    where: {
+      id,
+      ...(includePrivate ? {} : { isPublicVisible: true, event: { isPublicVisible: true } })
+    },
     include: raceInclude
   });
   return race ? adaptRace(race) : null;

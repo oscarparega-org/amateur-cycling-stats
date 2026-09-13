@@ -1,9 +1,51 @@
 import { Hono } from 'hono';
-import { HTTPException } from 'hono/http-exception';
+import { RoleTypeEnum } from '@acs/shared';
+import { z } from 'zod';
 import * as eventsService from '../services/events.service.js';
-import { requireAuth, requireOrgMember, requireEventOrgMember } from '../lib/auth-helpers.js';
+import {
+  canManageEvent,
+  canManageOrganization,
+  requireAuth,
+  requireOrgMember,
+  requireEventOrgMember,
+  requireRole
+} from '../lib/auth-helpers.js';
+import {
+  atLeastOneField,
+  dateTime,
+  nullableOptionalText,
+  optionalText,
+  parseJson,
+  shortText,
+  uuid
+} from '../lib/validation.js';
 
 const events = new Hono();
+
+const createEventSchema = z
+  .object({
+    name: shortText,
+    dateTime,
+    year: z.number().int().min(1800).max(2200),
+    country: shortText,
+    state: shortText,
+    city: z.string().trim().max(200).optional(),
+    description: optionalText,
+    organizationId: uuid.optional()
+  })
+  .strict();
+
+const updateEventSchema = atLeastOneField({
+  name: shortText.optional(),
+  description: nullableOptionalText,
+  dateTime: dateTime.optional(),
+  eventStatus: z.enum(['DRAFT', 'AVAILABLE', 'SOLD_OUT', 'ON_GOING', 'FINISHED']).optional(),
+  year: z.number().int().min(1800).max(2200).optional(),
+  country: shortText.optional(),
+  state: shortText.optional(),
+  city: z.string().trim().max(200).nullable().optional(),
+  isPublicVisible: z.boolean().optional()
+});
 
 // GET endpoints — public
 events.get('/', async (c) => {
@@ -12,7 +54,8 @@ events.get('/', async (c) => {
 
   if (organizationId) {
     const filter = (c.req.query('filter') as 'all' | 'future' | 'past') || undefined;
-    return c.json(await eventsService.getEventsByOrganization(organizationId, filter));
+    const includePrivate = await canManageOrganization(c, organizationId);
+    return c.json(await eventsService.getEventsByOrganization(organizationId, filter, includePrivate));
   }
   if (type === 'future') return c.json(await eventsService.getFutureEvents());
   if (type === 'past') {
@@ -23,38 +66,28 @@ events.get('/', async (c) => {
 });
 
 events.get('/:id', async (c) => {
-  const event = await eventsService.getEventById(c.req.param('id'));
+  const id = c.req.param('id');
+  const event = await eventsService.getEventById(id, await canManageEvent(c, id));
   if (!event) return c.json({ error: 'Not found' }, 404);
-  if (!event.isPublicVisible) {
-    try {
-      await requireEventOrgMember(c, event.id);
-    } catch (error: unknown) {
-      if (error instanceof HTTPException && (error.status === 401 || error.status === 403)) {
-        return c.json({ error: 'Not found' }, 404);
-      }
-      throw error;
-    }
-  }
   return c.json(event);
 });
 
 // Write endpoints — require org membership or admin
 events.post('/', async (c) => {
-  requireAuth(c); // Always require auth for event creation
-  const body = await c.req.json();
-  if (!body.name || !body.dateTime || !body.year || !body.country || !body.state || !body.createdBy) {
-    return c.json({ error: 'name, dateTime, year, country, state, and createdBy are required' }, 400);
-  }
+  const user = requireAuth(c);
+  const body = await parseJson(c, createEventSchema);
   if (body.organizationId) {
     await requireOrgMember(c, body.organizationId);
+  } else {
+    await requireRole(c, [RoleTypeEnum.ADMIN]);
   }
-  const event = await eventsService.createEvent(body);
+  const event = await eventsService.createEvent({ ...body, createdBy: user.id });
   return c.json(event, 201);
 });
 
 events.patch('/:id', async (c) => {
   await requireEventOrgMember(c, c.req.param('id'));
-  const event = await eventsService.updateEvent(c.req.param('id'), await c.req.json());
+  const event = await eventsService.updateEvent(c.req.param('id'), await parseJson(c, updateEventSchema));
   if (!event) return c.json({ error: 'Not found' }, 404);
   return c.json(event);
 });

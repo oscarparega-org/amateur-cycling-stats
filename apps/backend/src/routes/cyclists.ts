@@ -1,10 +1,25 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import * as cyclistsService from '../services/cyclists.service.js';
 import { requireAuth, requireRole } from '../lib/auth-helpers.js';
 import { RoleTypeEnum } from '@acs/shared';
 import { prisma } from '../lib/prisma.js';
+import { atLeastOneField, parseJson, shortText, uuid } from '../lib/validation.js';
 
 const cyclists = new Hono();
+
+const createCyclistSchema = z
+  .object({
+    firstName: shortText,
+    lastName: z.string().trim().max(200).optional(),
+    bornYear: z.number().int().min(1900).max(new Date().getFullYear()).optional(),
+    genderId: uuid.optional()
+  })
+  .strict();
+const updateCyclistSchema = atLeastOneField({
+  bornYear: z.number().int().min(1900).max(new Date().getFullYear()).nullable().optional(),
+  genderId: uuid.nullable().optional()
+});
 
 // GET — public
 cyclists.get('/:id', async (c) => {
@@ -16,8 +31,7 @@ cyclists.get('/:id', async (c) => {
 // POST — organizer (for unregistered cyclists) or admin
 cyclists.post('/', async (c) => {
   await requireRole(c, [RoleTypeEnum.ADMIN, RoleTypeEnum.ORGANIZER]);
-  const body = await c.req.json();
-  if (!body.firstName) return c.json({ error: 'firstName is required' }, 400);
+  const body = await parseJson(c, createCyclistSchema);
   // Create unregistered user + cyclist via service
   // (This will be implemented as a new service function)
   const cyclist = await cyclistsService.createUnregisteredCyclist(body);
@@ -34,7 +48,7 @@ cyclists.patch('/:id', async (c) => {
     // Must be admin or organizer
     await requireRole(c, [RoleTypeEnum.ADMIN, RoleTypeEnum.ORGANIZER]);
   }
-  const updated = await cyclistsService.updateCyclist(c.req.param('id'), await c.req.json());
+  const updated = await cyclistsService.updateCyclist(c.req.param('id'), await parseJson(c, updateCyclistSchema));
   if (!updated) return c.json({ error: 'Not found' }, 404);
   return c.json(updated);
 });

@@ -50,6 +50,49 @@ export async function isAdmin(c: Context): Promise<boolean> {
 }
 
 /**
+ * Check whether the current user may manage an organization without throwing.
+ * Used by read routes to decide whether private records can be included.
+ */
+export async function canManageOrganization(c: Context, organizationId: string): Promise<boolean> {
+  const user = getAuthUser(c);
+  if (!user) return false;
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    include: { role: true }
+  });
+  if (dbUser?.role?.name === RoleTypeEnum.ADMIN) return true;
+  if (dbUser?.role?.name !== RoleTypeEnum.ORGANIZER) return false;
+
+  return Boolean(
+    await prisma.organizer.findFirst({
+      where: { userId: user.id, organizationId },
+      select: { id: true }
+    })
+  );
+}
+
+/** Check whether the current user may manage a specific event. */
+export async function canManageEvent(c: Context, eventId: string): Promise<boolean> {
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    select: { organizationId: true }
+  });
+  if (!event) return false;
+  if (event.organizationId) return canManageOrganization(c, event.organizationId);
+  return isAdmin(c);
+}
+
+/** Check whether the current user may manage a race through its parent event. */
+export async function canManageRace(c: Context, raceId: string): Promise<boolean> {
+  const race = await prisma.race.findUnique({
+    where: { id: raceId },
+    select: { eventId: true }
+  });
+  return race ? canManageEvent(c, race.eventId) : false;
+}
+
+/**
  * Require the user to be an organizer in the specified organization, or an admin.
  */
 export async function requireOrgMember(c: Context, organizationId: string) {
