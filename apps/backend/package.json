@@ -8,7 +8,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "check": "tsc --noEmit",
-    "lint": "echo 'no linter configured yet'",
+    "lint": "eslint src test",
     "test": "npm run test:unit",
     "test:unit": "vitest run --project unit",
     "test:e2e": "vitest run --project e2e",
@@ -26,7 +26,7 @@
     "@prisma/client": "6.19.3",
     "better-auth": "1.7.1",
     "dotenv": "17.2.3",
-    "hono": "^4",
+    "hono": "^4.13.7",
     "resend": "^6.9.4"
   },
   "devDependencies": {

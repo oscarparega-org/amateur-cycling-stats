@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import type { Hono } from 'hono';
 import { health } from './health.js';
 import { organizations } from './organizations.js';
 import { categories } from './categories.js';

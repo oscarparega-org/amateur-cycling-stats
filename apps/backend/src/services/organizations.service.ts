@@ -18,10 +18,7 @@ export async function getOrganizationById(id: string): Promise<Organization | nu
   return org ? adaptOrganization(org) : null;
 }
 
-export async function createOrganization(data: {
-  name: string;
-  description?: string;
-}): Promise<Organization> {
+export async function createOrganization(data: { name: string; description?: string }): Promise<Organization> {
   const org = await prisma.organization.create({
     data,
     include: { _count: { select: { events: true } } }
@@ -29,10 +26,7 @@ export async function createOrganization(data: {
   return adaptOrganization(org);
 }
 
-export async function updateOrganization(
-  id: string,
-  data: PartialOrganization
-): Promise<Organization | null> {
+export async function updateOrganization(id: string, data: PartialOrganization): Promise<Organization | null> {
   const org = await prisma.organization.findUnique({ where: { id } });
   if (!org) return null;
   const updated = await prisma.organization.update({

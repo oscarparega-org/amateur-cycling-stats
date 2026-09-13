@@ -25,8 +25,13 @@ describe('authentication BFF proxy', () => {
     });
 
     const response = await POST(request, { params: Promise.resolve({ path: ['sign-in', 'email'] }) });
-    expect(fetchMock).toHaveBeenCalledWith(new URL('http://backend.internal:3000/api/auth/sign-in/email?source=ui'), expect.objectContaining({ method: 'POST', redirect: 'manual', cache: 'no-store' }));
-    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(fetchMock).toHaveBeenCalledWith(
+      new URL('http://backend.internal:3000/api/auth/sign-in/email?source=ui'),
+      expect.objectContaining({ method: 'POST', redirect: 'manual', cache: 'no-store' })
+    );
+    const firstCall = fetchMock.mock.calls.at(0);
+    expect(firstCall).toBeDefined();
+    const init = firstCall?.[1] as RequestInit;
     expect(new Headers(init.headers).get('cookie')).toBe('existing=1');
     expect(new TextDecoder().decode(init.body as ArrayBuffer)).toContain('rider@example.com');
     expect(response.status).toBe(302);

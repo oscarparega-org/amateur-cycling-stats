@@ -3,9 +3,7 @@ import { RoleTypeEnum } from '@acs/shared';
 import type { OrganizationInvitation as PrismaInvitation } from '@prisma/client';
 
 export function adaptInvitation(inv: PrismaInvitation): OrganizationInvitation {
-  const roleType = inv.roleType === 'ORGANIZER_OWNER'
-    ? RoleTypeEnum.ORGANIZER_OWNER
-    : RoleTypeEnum.ORGANIZER_STAFF;
+  const roleType = inv.roleType === 'ORGANIZER_OWNER' ? RoleTypeEnum.ORGANIZER_OWNER : RoleTypeEnum.ORGANIZER_STAFF;
   return {
     id: inv.id,
     organizationId: inv.organizationId,

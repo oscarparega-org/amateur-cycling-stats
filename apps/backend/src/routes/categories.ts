@@ -1,12 +1,12 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import * as catService from '../services/categories.service.js';
-import { requireRole, requireOrgOwner, isAdmin } from '../lib/auth-helpers.js';
+import { requireOrgOwner, requireRole } from '../lib/auth-helpers.js';
 import { RoleTypeEnum } from '@acs/shared';
 
 const categories = new Hono();
 
 // Helper: check auth for category write operations
-async function requireCategoryWriteAuth(c: import('hono').Context, organizationId?: string) {
+async function requireCategoryWriteAuth(c: Context, organizationId?: string) {
   if (!organizationId) {
     // Global category — admin only
     await requireRole(c, [RoleTypeEnum.ADMIN]);

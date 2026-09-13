@@ -15,7 +15,8 @@ const messages: Record<string, string> = {
 
 export function getAuthErrorMessage(error?: AuthApiError | null): string {
   if (!error) return 'No pudimos completar la acción. Inténtalo de nuevo.';
-  if (error.code && messages[error.code]) return messages[error.code];
+  const knownMessage = error.code ? messages[error.code] : undefined;
+  if (knownMessage) return knownMessage;
   return 'No pudimos completar la acción. Revisa tus datos e inténtalo de nuevo.';
 }
 

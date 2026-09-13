@@ -2,61 +2,64 @@
 
 ## Delivery model
 
-GitHub-hosted CI runs after a commit is pushed. Use pull requests and required status checks to prevent unvalidated changes from reaching `main`; use the deployment job to prevent Coolify from deploying a `main` commit until the checks for that exact commit pass.
+GitHub Actions is the only deployment controller. Pull requests and `main` pushes run formatting, dependency audit,
+strict TypeScript, linting, unit/integration tests, a production build, Playwright smoke coverage, Compose validation,
+and production image builds. Coolify auto-deploy must remain disabled.
 
-The development flow is:
-
-1. Open a pull request into `main`.
-2. GitHub Actions runs the `Quality` and `Production images` jobs.
-3. Branch protection permits the merge only after both jobs pass.
-4. The same workflow validates the resulting `main` commit.
-5. The `Deploy development` job calls Coolify only after both jobs pass.
-
-The workflow cancels an older run when a newer commit reaches the same branch, reducing the chance that an obsolete commit triggers a deployment.
+After every required check succeeds on `main`, the deployment job reconciles dedicated Coolify resources, pins the
+application to `GITHUB_SHA`, starts that deployment, waits for its terminal status, and smoke-tests both public URLs.
+The job records the URLs, commit, and Coolify deployment ID in the GitHub Actions summary.
 
 ## GitHub configuration
 
-Create a GitHub environment named `development` and restrict its deployment branch to `main`.
+Create an environment named `development` and restrict it to `main`. The environment provides deployment protection
+and records `DEV_URL`; keep the configuration itself at organization or repository scope as described below.
 
-Add these environment secrets:
+Organization variables shared by projects using the same Coolify installation:
 
-- `COOLIFY_API_TOKEN` — a Coolify API token with Deploy permission.
-- `COOLIFY_DEV_WEBHOOK` — the deployment webhook from the Coolify development resource.
+- `COOLIFY_API_URL` — HTTPS base URL ending at the Coolify API root.
+- `COOLIFY_SERVER_UUID` — destination server UUID.
+- `DEPLOY_BASE_DOMAIN` — base domain without protocol or wildcard prefix.
 
-Add `DEV_URL` as an environment variable containing the public frontend URL.
+Organization secrets shared by those projects:
 
-Protect `main`, require pull requests, and require the `Quality` and `Production images` status checks. Do not allow direct pushes that bypass these checks.
+- `COOLIFY_WRITE_TOKEN` — token allowed to create and update projects, environments, destinations, applications, and
+  application environment variables.
+- `COOLIFY_DEPLOY_TOKEN` — narrower token used to start deployments.
 
-## Coolify development resource
+Repository variables specific to this project:
 
-Create a development environment and a Docker Compose application with:
+- `DEV_URL` — public frontend URL shown by GitHub Deployments.
+- `EMAIL_FROM` — verified sender used by authentication email.
 
-- Repository branch: `main`
-- Base directory: `/`
-- Compose file: `/docker-compose.coolify.yml`
-- Auto Deploy: disabled
+Repository secrets specific to this project:
 
-Auto Deploy must be disabled because the GitHub Actions deployment job is the only deployment trigger. Otherwise Coolify starts building immediately on every push and bypasses the CI gate.
+- `RESEND_API_KEY` — production email provider credential.
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` — production OAuth credentials.
 
-Configure the values listed in `.env.coolify.example` in Coolify. Do not upload an environment file containing secrets. Assign development domains to the `frontend` and `backend` services on container port `3000`, for example `dev.example.com` and `api-dev.example.com`.
+Do not duplicate these values in the `development` environment unless an environment-specific override is
+intentional. GitHub Actions resolves the existing `vars.*` and `secrets.*` references from repository and organization
+scope, while the job's `environment` declaration still applies the deployment protection rules.
 
-The Compose file deliberately defines no custom networks. Coolify creates the application network and attaches its reverse proxy to it; service names such as `backend` and `postgres` remain resolvable inside the stack.
+Protect `main` and require the `Quality` and `Production images` checks. Do not permit direct pushes that bypass them.
 
-## Current CI coverage and gaps
+## Coolify resources
 
-The initial gate verifies dependency installation, strict TypeScript, configured lint scripts, configured tests, application builds, Compose parsing, and both production Docker images.
+`scripts/coolify.mjs` derives deterministic names and development domains from the GitHub repository ID and name. It
+creates or reuses the project, environment, destination, and Compose application, then continuously reconciles the
+exact commit, domains, destination, environment variables, and disabled auto-deploy setting.
 
-The following must be completed before treating the same pipeline as production-ready:
+Coolify generates `SERVICE_USER_POSTGRES`, `SERVICE_PASSWORD_64_POSTGRES`, and `SERVICE_BASE64_64_AUTH`. The deployment
+controller writes public URLs and provider configuration. Do not upload an environment file containing secrets.
 
-- Replace backend/shared placeholder lint scripts with real linting.
-- Add frontend automated tests. The current frontend test script is a placeholder.
-- Stabilize and enable the Docker-backed backend end-to-end tests before requiring them as a production check.
-- Move database migration execution out of the backend container startup path before enabling multiple replicas or rolling production deployments.
-- Configure scheduled PostgreSQL backups and verify a restore procedure.
-- Add post-deployment smoke checks and external uptime/error monitoring.
-- Define a rollback procedure. For production, prefer immutable images tagged with the Git commit SHA rather than rebuilding a moving branch.
-- Use a separate Coolify production environment, database volume, domains, credentials, API token, and deployment approval. Never promote the development database or secrets.
+The Compose stack uses a one-shot `migrate` service that Coolify excludes from ongoing health evaluation. Backend
+startup is gated on successful migrations, so application replicas never race to change the schema. Required roles
+and global lookup rows are installed through immutable Prisma migrations; production does not run a separate seed
+command. Both application containers expose health checks and run as non-root users.
 
-## Promotion to production
+## Production promotion
 
-Keep development deployment automatic after `main` passes. Add production later as a separate GitHub environment with required approval. Promote the already validated commit/image rather than running an unrelated build, then run migrations once, deploy, verify health, and retain the previous image for rollback.
+Create a separate production GitHub environment and separate Coolify project, database volume, credentials, domains,
+and approval policy. Promote an already validated immutable SHA or image; do not rebuild a moving branch. Back up the
+database and verify restoration before schema changes, run migrations once, smoke-test the release, and retain the
+previous image for rollback.

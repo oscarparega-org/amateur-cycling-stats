@@ -13,7 +13,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const session = await getServerSession();
   return (
     <html lang="es">
-      <body><SiteHeader initialSession={session} />{children}</body>
+      <body>
+        <SiteHeader initialSession={session} />
+        {children}
+      </body>
     </html>
   );
 }

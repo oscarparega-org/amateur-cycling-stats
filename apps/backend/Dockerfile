@@ -13,6 +13,7 @@ RUN npm ci
 FROM base AS build
 WORKDIR /app
 COPY --from=deps /app/ ./
+COPY tsconfig.base.json ./
 COPY packages/shared/ ./packages/shared/
 COPY apps/backend/ ./apps/backend/
 COPY turbo.json ./
@@ -38,4 +39,5 @@ COPY --from=build /app/packages/shared/dist ./node_modules/@acs/shared/dist
 COPY --from=build /app/packages/shared/package.json ./node_modules/@acs/shared/package.json
 
 EXPOSE 3000
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+USER node
+CMD ["node", "dist/index.js"]

@@ -21,8 +21,17 @@ races.get('/:id', async (c) => {
 // Write endpoints — require event org membership or admin
 races.post('/', async (c) => {
   const body = await c.req.json();
-  if (!body.eventId || !body.raceCategoryAgeId || !body.raceCategoryGenderId || !body.raceCategoryDistanceId || !body.dateTime) {
-    return c.json({ error: 'eventId, raceCategoryAgeId, raceCategoryGenderId, raceCategoryDistanceId, and dateTime are required' }, 400);
+  if (
+    !body.eventId ||
+    !body.raceCategoryAgeId ||
+    !body.raceCategoryGenderId ||
+    !body.raceCategoryDistanceId ||
+    !body.dateTime
+  ) {
+    return c.json(
+      { error: 'eventId, raceCategoryAgeId, raceCategoryGenderId, raceCategoryDistanceId, and dateTime are required' },
+      400
+    );
   }
   await requireEventOrgMember(c, body.eventId);
   try {

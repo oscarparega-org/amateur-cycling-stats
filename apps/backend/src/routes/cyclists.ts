@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import * as cyclistsService from '../services/cyclists.service.js';
-import { requireAuth, requireRole, requireOrgMember } from '../lib/auth-helpers.js';
+import { requireAuth, requireRole } from '../lib/auth-helpers.js';
 import { RoleTypeEnum } from '@acs/shared';
 import { prisma } from '../lib/prisma.js';
 

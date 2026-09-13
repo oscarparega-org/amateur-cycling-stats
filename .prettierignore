@@ -1,0 +1,13 @@
+node_modules/
+.claude/
+.codex/
+.next/
+dist/
+build/
+.turbo/
+coverage/
+archive/
+docs/superpowers/
+test-results/
+playwright-report/
+apps/frontend/next-env.d.ts

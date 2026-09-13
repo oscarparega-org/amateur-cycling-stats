@@ -6,20 +6,47 @@
     "packages/*"
   ],
   "scripts": {
+    "prepare": "husky",
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "turbo lint",
+    "lint": "turbo lint && eslint scripts playwright.config.ts",
     "check": "turbo check",
-    "test": "turbo test",
+    "format": "prettier . --write --ignore-unknown",
+    "format:check": "prettier . --check --ignore-unknown",
+    "test": "turbo test && node --test scripts/*.test.mjs",
+    "test:e2e": "npm run test:e2e --workspace=acs-backend",
+    "test:browser": "node scripts/browser-test.mjs",
+    "build:containers": "node scripts/production-images.mjs",
+    "precommit": "npm run format:check && npm run check && npm run lint && npm test",
+    "prepush": "npm run precommit && npm audit --audit-level=high && npm run test:e2e && npm run build && npm run test:e2e --workspace=acs-frontend && npm run test:browser && npm run build:containers",
     "db:generate": "turbo db:generate",
     "db:migrate": "turbo db:migrate",
-    "db:seed": "turbo db:seed"
+    "db:seed": "turbo db:seed",
+    "deploy:coolify": "node scripts/coolify.mjs",
+    "compose:up": "docker compose up --build",
+    "compose:down": "docker compose down",
+    "wt:init": "node scripts/worktree.mjs init",
+    "wt:dev": "node scripts/worktree.mjs dev",
+    "wt:status": "node scripts/worktree.mjs status",
+    "wt:down": "node scripts/worktree.mjs down",
+    "wt:remove": "node scripts/worktree.mjs remove"
   },
   "packageManager": "npm@10.9.3",
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.63.0",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
     "deepmerge-ts": "8.0.2",
+    "eslint": "^9.39.5",
+    "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "jsdom": "^27.4.0",
+    "prettier": "^3.9.6",
     "testcontainers": "12.0.4",
     "turbo": "^2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.0",
     "vitest": "^4.1.11"
   },
   "overrides": {
@@ -27,6 +54,10 @@
     "deepmerge-ts": "8.0.2",
     "effect": "3.22.1",
     "esbuild": "0.28.2",
+    "hono": "4.13.7",
+    "js-yaml": "4.3.2",
+    "next": "16.3.5",
+    "sharp": "0.35.4",
     "@testcontainers/postgresql@12.0.4": {
       "testcontainers": "12.0.4"
     }

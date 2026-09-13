@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import * as invitationsService from '../services/invitations.service.js';
-import { requireAuth, requireOrgOwner, isAdmin, getAuthUser } from '../lib/auth-helpers.js';
+import { isAdmin, requireAuth, requireOrgOwner } from '../lib/auth-helpers.js';
 import { auth } from '../lib/auth.js';
 import { prisma } from '../lib/prisma.js';
 import { setPendingInvitation } from '../lib/email.js';
@@ -59,7 +59,7 @@ invitations.post('/', async (c) => {
     });
     // Update invitation tracking fields
     await invitationsService.updateInvitation(invitation.id, {
-      retryCount: invitation.retryCount + 1,
+      retryCount: invitation.retryCount + 1
     });
   } catch (err) {
     console.error('[AUTH] Failed to send magic link:', err);
@@ -79,7 +79,9 @@ invitations.patch('/:id', async (c) => {
   const isInvitedUser = user.email === existing.email;
   if (!admin && !isInvitedUser) {
     // Check if org owner
-    try { await requireOrgOwner(c, existing.organizationId); } catch {
+    try {
+      await requireOrgOwner(c, existing.organizationId);
+    } catch {
       return c.json({ error: 'Forbidden' }, 403);
     }
   }
@@ -98,7 +100,9 @@ invitations.delete('/:id', async (c) => {
   const admin = await isAdmin(c);
   const isInvitedUser = user.email === existing.email;
   if (!admin && !isInvitedUser) {
-    try { await requireOrgOwner(c, existing.organizationId); } catch {
+    try {
+      await requireOrgOwner(c, existing.organizationId);
+    } catch {
       return c.json({ error: 'Forbidden' }, 403);
     }
   }

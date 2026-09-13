@@ -7,8 +7,4 @@ export type { Race } from './race.domain.js';
 export type { RaceResult } from './race-result.domain.js';
 export type { Organization, PartialOrganization } from './organization.domain.js';
 export type { OrganizationInvitation } from './organization-invitation.domain.js';
-export type {
-  RaceCategoryAge,
-  RaceCategoryGender,
-  RaceCategoryDistance
-} from './race-category.domain.js';
+export type { RaceCategoryAge, RaceCategoryGender, RaceCategoryDistance } from './race-category.domain.js';

@@ -1,11 +1,6 @@
 import type { Cyclist } from '@acs/shared';
 import { RoleTypeEnum } from '@acs/shared';
-import type {
-  Cyclist as PrismaCyclist,
-  User,
-  CyclistGender,
-  Role
-} from '@prisma/client';
+import type { Cyclist as PrismaCyclist, User, CyclistGender, Role } from '@prisma/client';
 
 type PrismaCyclistWithRelations = PrismaCyclist & {
   user: User & { role: Role | null };

@@ -62,8 +62,7 @@ export async function requireOrgMember(c: Context, organizationId: string) {
   if (dbUser?.role?.name === RoleTypeEnum.ADMIN) return user;
 
   // Must have ORGANIZER_* role
-  if (dbUser?.role?.name !== RoleTypeEnum.ORGANIZER_OWNER &&
-      dbUser?.role?.name !== RoleTypeEnum.ORGANIZER_STAFF) {
+  if (dbUser?.role?.name !== RoleTypeEnum.ORGANIZER_OWNER && dbUser?.role?.name !== RoleTypeEnum.ORGANIZER_STAFF) {
     throw new HTTPException(403, { message: 'Forbidden' });
   }
 
@@ -109,8 +108,7 @@ export async function requireEventOrgMember(c: Context, eventId: string) {
   });
   if (dbUser?.role?.name === RoleTypeEnum.ADMIN) return user;
 
-  if (dbUser?.role?.name !== RoleTypeEnum.ORGANIZER_OWNER &&
-      dbUser?.role?.name !== RoleTypeEnum.ORGANIZER_STAFF) {
+  if (dbUser?.role?.name !== RoleTypeEnum.ORGANIZER_OWNER && dbUser?.role?.name !== RoleTypeEnum.ORGANIZER_STAFF) {
     throw new HTTPException(403, { message: 'Forbidden' });
   }
 

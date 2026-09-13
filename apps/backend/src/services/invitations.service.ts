@@ -3,9 +3,7 @@ import type { InvitationRoleType, InvitationStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { adaptInvitation } from '../adapters/invitations.adapter.js';
 
-export async function getInvitationsByOrganizationId(
-  organizationId: string
-): Promise<OrganizationInvitation[]> {
+export async function getInvitationsByOrganizationId(organizationId: string): Promise<OrganizationInvitation[]> {
   const invitations = await prisma.organizationInvitation.findMany({
     where: { organizationId },
     orderBy: { createdAt: 'desc' }
@@ -13,9 +11,7 @@ export async function getInvitationsByOrganizationId(
   return invitations.map(adaptInvitation);
 }
 
-export async function getInvitationByEmail(
-  email: string
-): Promise<OrganizationInvitation | null> {
+export async function getInvitationByEmail(email: string): Promise<OrganizationInvitation | null> {
   const invitation = await prisma.organizationInvitation.findFirst({
     where: { email, status: 'PENDING' }
   });
