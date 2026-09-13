@@ -50,7 +50,7 @@ export async function isAdmin(c: Context): Promise<boolean> {
 }
 
 /**
- * Require the user to be an organizer (OWNER or STAFF) in the specified organization, or an admin.
+ * Require the user to be an organizer in the specified organization, or an admin.
  */
 export async function requireOrgMember(c: Context, organizationId: string) {
   const user = requireAuth(c);
@@ -61,34 +61,11 @@ export async function requireOrgMember(c: Context, organizationId: string) {
   });
   if (dbUser?.role?.name === RoleTypeEnum.ADMIN) return user;
 
-  // Must have ORGANIZER_* role
-  if (dbUser?.role?.name !== RoleTypeEnum.ORGANIZER_OWNER && dbUser?.role?.name !== RoleTypeEnum.ORGANIZER_STAFF) {
+  if (dbUser?.role?.name !== RoleTypeEnum.ORGANIZER) {
     throw new HTTPException(403, { message: 'Forbidden' });
   }
 
   // Must be in the specific organization
-  const organizer = await prisma.organizer.findFirst({
-    where: { userId: user.id, organizationId }
-  });
-  if (!organizer) throw new HTTPException(403, { message: 'Forbidden' });
-  return user;
-}
-
-/**
- * Require the user to be an ORGANIZER_OWNER in the specified organization, or an admin.
- */
-export async function requireOrgOwner(c: Context, organizationId: string) {
-  const user = requireAuth(c);
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    include: { role: true }
-  });
-  if (dbUser?.role?.name === RoleTypeEnum.ADMIN) return user;
-
-  if (dbUser?.role?.name !== RoleTypeEnum.ORGANIZER_OWNER) {
-    throw new HTTPException(403, { message: 'Forbidden' });
-  }
-
   const organizer = await prisma.organizer.findFirst({
     where: { userId: user.id, organizationId }
   });
@@ -108,7 +85,7 @@ export async function requireEventOrgMember(c: Context, eventId: string) {
   });
   if (dbUser?.role?.name === RoleTypeEnum.ADMIN) return user;
 
-  if (dbUser?.role?.name !== RoleTypeEnum.ORGANIZER_OWNER && dbUser?.role?.name !== RoleTypeEnum.ORGANIZER_STAFF) {
+  if (dbUser?.role?.name !== RoleTypeEnum.ORGANIZER) {
     throw new HTTPException(403, { message: 'Forbidden' });
   }
 

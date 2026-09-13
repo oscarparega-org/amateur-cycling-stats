@@ -24,6 +24,29 @@ const worktreeConfigVersion = '1';
 const slotCount = 200;
 const portBases = { api: 3100, web: 5200, postgres: 55432 };
 
+export const developmentBootstrapCommands = [
+  {
+    label: 'building shared package',
+    executable: 'npm',
+    args: ['run', 'build', '--workspace=./packages/shared']
+  },
+  {
+    label: 'generating Prisma client',
+    executable: 'npx',
+    args: ['prisma', 'generate', '--schema', 'apps/backend/prisma/schema.prisma']
+  },
+  {
+    label: 'deploying Prisma migrations',
+    executable: 'npx',
+    args: ['prisma', 'migrate', 'deploy', '--schema', 'apps/backend/prisma/schema.prisma']
+  },
+  {
+    label: 'seeding development data',
+    executable: 'npm',
+    args: ['run', 'db:seed', '--workspace=acs-backend']
+  }
+];
+
 export function slugify(value) {
   const slug = value
     .toLowerCase()
@@ -351,12 +374,10 @@ async function develop(root) {
 
   console.log('[worktree] starting PostgreSQL');
   compose(root, config, ['up', '-d', '--wait', '--wait-timeout', '60', 'postgres']);
-  console.log('[worktree] building shared package');
-  command('npm', ['run', 'build', '--workspace=./packages/shared'], { cwd: root, env });
-  console.log('[worktree] generating Prisma client');
-  command('npx', ['prisma', 'generate', '--schema', 'apps/backend/prisma/schema.prisma'], { cwd: root, env });
-  console.log('[worktree] deploying Prisma migrations');
-  command('npx', ['prisma', 'migrate', 'deploy', '--schema', 'apps/backend/prisma/schema.prisma'], { cwd: root, env });
+  for (const step of developmentBootstrapCommands) {
+    console.log(`[worktree] ${step.label}`);
+    command(step.executable, step.args, { cwd: root, env });
+  }
   printConfig(config, 'Development stack ready');
 
   const children = [

@@ -36,11 +36,7 @@ authSetup.post('/complete-organizer-setup', async (c) => {
     return c.json({ error: 'Invitation email does not match authenticated user' }, 403);
   }
 
-  // Determine role from invitation
-  const roleName =
-    invitation.roleType === 'ORGANIZER_OWNER' ? RoleTypeEnum.ORGANIZER_OWNER : RoleTypeEnum.ORGANIZER_STAFF;
-
-  const role = await prisma.role.findUnique({ where: { name: roleName } });
+  const role = await prisma.role.findUnique({ where: { name: RoleTypeEnum.ORGANIZER } });
   if (!role) return c.json({ error: 'Role not found' }, 500);
 
   // Atomic transaction

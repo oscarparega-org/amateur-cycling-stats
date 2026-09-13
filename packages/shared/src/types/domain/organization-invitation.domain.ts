@@ -6,7 +6,7 @@ export interface OrganizationInvitation {
   organizationId: string;
   email: string;
   invitedByUserId: string;
-  roleType: RoleTypeEnum.ORGANIZER_OWNER | RoleTypeEnum.ORGANIZER_STAFF;
+  roleType: RoleTypeEnum.ORGANIZER;
   status: InvitationStatus;
   retryCount: number;
   lastInvitationSentAt: string | null;

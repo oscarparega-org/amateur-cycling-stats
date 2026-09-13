@@ -1,9 +1,7 @@
 import type { Organizer, PartialOrganizer } from '@acs/shared';
-import { PG_ERROR_CODES, RoleTypeEnum } from '@acs/shared';
+import { PG_ERROR_CODES } from '@acs/shared';
 import { prisma } from '../lib/prisma.js';
 import { adaptOrganizer, organizerInclude } from '../adapters/organizers.adapter.js';
-
-// Uses RoleTypeEnum for all role name comparisons to avoid string literal fragility
 
 export async function getOrganizersByOrganizationId(organizationId: string): Promise<Organizer[]> {
   const organizers = await prisma.organizer.findMany({
@@ -33,18 +31,6 @@ export async function updateOrganizer(id: string, data: PartialOrganizer): Promi
     if (Object.keys(userUpdate).length > 0) {
       await tx.user.update({ where: { id: organizer.userId }, data: userUpdate });
     }
-
-    // Update role if roleType changed
-    if (data.roleType !== undefined) {
-      const roleName = data.roleType === RoleTypeEnum.ORGANIZER_OWNER ? 'ORGANIZER_OWNER' : 'ORGANIZER_STAFF';
-      const role = await tx.role.findUnique({ where: { name: roleName } });
-      if (role) {
-        await tx.user.update({
-          where: { id: organizer.userId },
-          data: { roleId: role.id }
-        });
-      }
-    }
   });
 
   const updated = await prisma.organizer.findUnique({
@@ -61,20 +47,11 @@ export async function deleteOrganizer(id: string): Promise<{ success: boolean; e
   });
   if (!organizer) return { success: false, errorCode: 'NOT_FOUND' };
 
-  // Check if this is the last owner — use RoleTypeEnum for safe comparison
-  if (organizer.user.role?.name === RoleTypeEnum.ORGANIZER_OWNER) {
-    const ownerRole = await prisma.role.findUnique({ where: { name: RoleTypeEnum.ORGANIZER_OWNER } });
-    if (ownerRole) {
-      const ownerCount = await prisma.organizer.count({
-        where: {
-          organizationId: organizer.organizationId,
-          user: { roleId: ownerRole.id }
-        }
-      });
-      if (ownerCount <= 1) {
-        return { success: false, errorCode: PG_ERROR_CODES.CANNOT_DELETE_LAST_OWNER };
-      }
-    }
+  const organizerCount = await prisma.organizer.count({
+    where: { organizationId: organizer.organizationId }
+  });
+  if (organizerCount <= 1) {
+    return { success: false, errorCode: PG_ERROR_CODES.CANNOT_DELETE_LAST_ORGANIZER };
   }
 
   await prisma.organizer.delete({ where: { id } });

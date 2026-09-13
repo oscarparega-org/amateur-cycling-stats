@@ -15,7 +15,7 @@ cyclists.get('/:id', async (c) => {
 
 // POST — organizer (for unregistered cyclists) or admin
 cyclists.post('/', async (c) => {
-  await requireRole(c, [RoleTypeEnum.ADMIN, RoleTypeEnum.ORGANIZER_OWNER, RoleTypeEnum.ORGANIZER_STAFF]);
+  await requireRole(c, [RoleTypeEnum.ADMIN, RoleTypeEnum.ORGANIZER]);
   const body = await c.req.json();
   if (!body.firstName) return c.json({ error: 'firstName is required' }, 400);
   // Create unregistered user + cyclist via service
@@ -32,7 +32,7 @@ cyclists.patch('/:id', async (c) => {
   // Allow if own profile
   if (cyclist.userId !== user.id) {
     // Must be admin or organizer
-    await requireRole(c, [RoleTypeEnum.ADMIN, RoleTypeEnum.ORGANIZER_OWNER, RoleTypeEnum.ORGANIZER_STAFF]);
+    await requireRole(c, [RoleTypeEnum.ADMIN, RoleTypeEnum.ORGANIZER]);
   }
   const updated = await cyclistsService.updateCyclist(c.req.param('id'), await c.req.json());
   if (!updated) return c.json({ error: 'Not found' }, 404);
@@ -41,7 +41,7 @@ cyclists.patch('/:id', async (c) => {
 
 // DELETE — admin or organizer (unlinked only)
 cyclists.delete('/:id', async (c) => {
-  await requireRole(c, [RoleTypeEnum.ADMIN, RoleTypeEnum.ORGANIZER_OWNER, RoleTypeEnum.ORGANIZER_STAFF]);
+  await requireRole(c, [RoleTypeEnum.ADMIN, RoleTypeEnum.ORGANIZER]);
   const deleted = await cyclistsService.deleteCyclist(c.req.param('id'));
   if (!deleted) return c.json({ error: 'Not found' }, 404);
   return c.json({ success: true });

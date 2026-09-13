@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import * as organizersService from '../services/organizers.service.js';
-import { requireOrgOwner } from '../lib/auth-helpers.js';
+import { requireOrgMember } from '../lib/auth-helpers.js';
 import { prisma } from '../lib/prisma.js';
 
 const organizers = new Hono();
@@ -19,25 +19,25 @@ organizers.get('/count', async (c) => {
   return c.json({ count });
 });
 
-// PATCH — admin or org owner
+// PATCH — admin or organization member
 organizers.patch('/:id', async (c) => {
   const organizer = await prisma.organizer.findUnique({ where: { id: c.req.param('id') } });
   if (!organizer) return c.json({ error: 'Not found' }, 404);
-  await requireOrgOwner(c, organizer.organizationId);
+  await requireOrgMember(c, organizer.organizationId);
   const body = await c.req.json();
   const updated = await organizersService.updateOrganizer(c.req.param('id'), body);
   if (!updated) return c.json({ error: 'Not found' }, 404);
   return c.json(updated);
 });
 
-// DELETE — admin or org owner (ACS01 protection in service)
+// DELETE — admin or organization member (ACS01 protection in service)
 organizers.delete('/:id', async (c) => {
   const organizer = await prisma.organizer.findUnique({ where: { id: c.req.param('id') } });
   if (!organizer) return c.json({ error: 'Not found' }, 404);
-  await requireOrgOwner(c, organizer.organizationId);
+  await requireOrgMember(c, organizer.organizationId);
   const result = await organizersService.deleteOrganizer(c.req.param('id'));
   if (result.errorCode === 'NOT_FOUND') return c.json({ error: 'Not found' }, 404);
-  if (result.errorCode) return c.json({ error: 'Cannot delete last owner', code: result.errorCode }, 409);
+  if (result.errorCode) return c.json({ error: 'Cannot delete last organizer', code: result.errorCode }, 409);
   return c.json({ success: true });
 });
 

@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   cleanupTarget,
   composeArguments,
+  developmentBootstrapCommands,
   deriveWorktreeIdentity,
   parseEnv,
   selectPortSlot,
@@ -84,6 +85,18 @@ test('Compose lifecycle commands pin the intended project and environment', () =
     'down',
     '--volumes'
   ]);
+});
+
+test('development bootstrap seeds only after the isolated database is migrated', () => {
+  assert.deepEqual(
+    developmentBootstrapCommands.map(({ label }) => label),
+    ['building shared package', 'generating Prisma client', 'deploying Prisma migrations', 'seeding development data']
+  );
+  assert.deepEqual(developmentBootstrapCommands.at(-1), {
+    label: 'seeding development data',
+    executable: 'npm',
+    args: ['run', 'db:seed', '--workspace=acs-backend']
+  });
 });
 
 test('port selection skips reserved and occupied slots', async () => {

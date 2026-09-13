@@ -158,6 +158,11 @@ beforeAll(async () => {
     env: process.env,
     stdio: 'pipe'
   });
+  execFileSync('npx', ['tsx', 'prisma/seed.ts'], {
+    cwd: process.cwd(),
+    env: process.env,
+    stdio: 'pipe'
+  });
 
   const [{ prisma: prismaClient }, { createAuth }, { loadAuthEnvironment }, { createApp }, { serve }] =
     await Promise.all([
@@ -197,10 +202,8 @@ describe('Production database bootstrap', () => {
       prisma.raceCategoryLength.findMany({ select: { name: true, isGlobal: true, isDefault: true } })
     ]);
 
-    expect(roles).toHaveLength(5);
-    expect(roles.map(({ name }) => name)).toEqual(
-      expect.arrayContaining(['PUBLIC', 'CYCLIST', 'ORGANIZER_STAFF', 'ORGANIZER_OWNER', 'ADMIN'])
-    );
+    expect(roles).toHaveLength(4);
+    expect(roles.map(({ name }) => name)).toEqual(expect.arrayContaining(['PUBLIC', 'CYCLIST', 'ORGANIZER', 'ADMIN']));
     expect(cyclistGenders.map(({ name }) => name)).toEqual(expect.arrayContaining(['M', 'F']));
     expect(categories).toHaveLength(26);
     expect(categories.every(({ isGlobal }) => isGlobal)).toBe(true);
@@ -215,6 +218,33 @@ describe('Production database bootstrap', () => {
 });
 
 describe('Hono authentication', () => {
+  it('signs in the seeded admin, organizer, and cyclist accounts with complete profiles', async () => {
+    const credentials = [
+      { email: 'admin@acs.com', password: '#admin123' },
+      { email: 'organizer@example.com', password: 'password123' },
+      { email: 'cyclist1@example.com', password: 'password123' }
+    ];
+
+    for (const credential of credentials) {
+      const response = await post(client(), '/api/auth/sign-in/email', credential);
+      expect(response.status).toBe(200);
+    }
+
+    const organizer = await prisma.user.findUniqueOrThrow({
+      where: { email: 'organizer@example.com' },
+      include: { role: true, organizers: true }
+    });
+    expect(organizer).toMatchObject({ emailVerified: true, role: { name: 'ORGANIZER' } });
+    expect(organizer.organizers).toHaveLength(1);
+
+    const cyclist = await prisma.user.findUniqueOrThrow({
+      where: { email: 'cyclist1@example.com' },
+      include: { role: true, cyclist: true }
+    });
+    expect(cyclist).toMatchObject({ emailVerified: true, role: { name: 'CYCLIST' } });
+    expect(cyclist.cyclist).toMatchObject({ bornYear: 1995 });
+  });
+
   it('registers, verifies, logs in, returns a session, and logs out', async () => {
     const email = 'email-flow@example.com';
     const preVerification = client();
@@ -328,9 +358,9 @@ describe('Hono authentication', () => {
 
   it('completes organizer onboarding from a magic-link session and enforces password bounds', async () => {
     const email = 'invited-organizer@example.com';
-    const ownerRole = await prisma.role.findUniqueOrThrow({ where: { name: 'ORGANIZER_OWNER' } });
+    const organizerRole = await prisma.role.findUniqueOrThrow({ where: { name: 'ORGANIZER' } });
     const inviter = await prisma.user.create({
-      data: { email: 'inviter@example.com', name: 'Inviter', emailVerified: true, roleId: ownerRole.id }
+      data: { email: 'inviter@example.com', name: 'Inviter', emailVerified: true, roleId: organizerRole.id }
     });
     const organization = await prisma.organization.create({ data: { name: 'Club de Prueba' } });
     const invitation = await prisma.organizationInvitation.create({
@@ -338,7 +368,7 @@ describe('Hono authentication', () => {
         email,
         organizationId: organization.id,
         invitedByUserId: inviter.id,
-        roleType: 'ORGANIZER_STAFF'
+        roleType: 'ORGANIZER'
       }
     });
 
@@ -367,7 +397,7 @@ describe('Hono authentication', () => {
       invitationId: invitation.id
     });
     expect(completed.status).toBe(200);
-    expect(await completed.json()).toMatchObject({ email, firstName: 'Ana', role: 'ORGANIZER_STAFF' });
+    expect(await completed.json()).toMatchObject({ email, firstName: 'Ana', role: 'ORGANIZER' });
     expect(
       await prisma.organizer.findFirst({ where: { user: { email }, organizationId: organization.id } })
     ).toBeTruthy();

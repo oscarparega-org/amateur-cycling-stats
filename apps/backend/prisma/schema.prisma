@@ -38,8 +38,7 @@ enum InvitationStatus {
 }
 
 enum InvitationRoleType {
-  ORGANIZER_OWNER
-  ORGANIZER_STAFF
+  ORGANIZER
 }
 
 // =====================================================

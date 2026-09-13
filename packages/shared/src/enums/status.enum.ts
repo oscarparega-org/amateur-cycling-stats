@@ -6,4 +6,4 @@ export type EventStatus = 'DRAFT' | 'AVAILABLE' | 'SOLD_OUT' | 'ON_GOING' | 'FIN
 
 export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED';
 
-export type InvitationRoleType = 'ORGANIZER_OWNER' | 'ORGANIZER_STAFF';
+export type InvitationRoleType = 'ORGANIZER';
