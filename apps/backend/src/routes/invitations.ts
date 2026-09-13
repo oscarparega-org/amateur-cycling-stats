@@ -48,7 +48,15 @@ invitations.post('/', async (c) => {
 
   // Trigger BetterAuth magic link for the invited email
   try {
-    await auth.api.signInMagicLink({ body: { email: body.email }, headers: c.req.raw.headers });
+    await auth.api.signInMagicLink({
+      body: {
+        email: body.email,
+        callbackURL: '/aceptar-invitacion',
+        newUserCallbackURL: '/aceptar-invitacion',
+        errorCallbackURL: '/error-autenticacion'
+      },
+      headers: c.req.raw.headers
+    });
     // Update invitation tracking fields
     await invitationsService.updateInvitation(invitation.id, {
       retryCount: invitation.retryCount + 1,

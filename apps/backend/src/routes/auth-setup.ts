@@ -18,6 +18,12 @@ authSetup.post('/complete-organizer-setup', async (c) => {
   if (!body.firstName || !body.lastName || !body.password || !body.invitationId) {
     return c.json({ error: 'firstName, lastName, password, and invitationId are required' }, 400);
   }
+  if (typeof body.password !== 'string' || body.password.length < 8) {
+    return c.json({ error: 'Password must contain at least 8 characters', code: 'PASSWORD_TOO_SHORT' }, 400);
+  }
+  if (body.password.length > 128) {
+    return c.json({ error: 'Password must contain at most 128 characters', code: 'PASSWORD_TOO_LONG' }, 400);
+  }
 
   // Verify invitation exists and is pending
   const invitation = await prisma.organizationInvitation.findUnique({
@@ -44,9 +50,9 @@ authSetup.post('/complete-organizer-setup', async (c) => {
     await tx.user.update({
       where: { id: user.id },
       data: {
-        firstName: body.firstName,
-        lastName: body.lastName,
-        name: `${body.firstName} ${body.lastName}`,
+        firstName: body.firstName.trim(),
+        lastName: body.lastName.trim(),
+        name: `${body.firstName.trim()} ${body.lastName.trim()}`,
         roleId: role.id
       }
     });

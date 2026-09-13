@@ -273,6 +273,48 @@ describe('Hono authentication', () => {
     expect(await prisma.cyclist.count({ where: { userId: after.id } })).toBe(1);
   });
 
+  it('completes organizer onboarding from a magic-link session and enforces password bounds', async () => {
+    const email = 'invited-organizer@example.com';
+    const ownerRole = await prisma.role.findUniqueOrThrow({ where: { name: 'ORGANIZER_OWNER' } });
+    const inviter = await prisma.user.create({
+      data: { email: 'inviter@example.com', name: 'Inviter', emailVerified: true, roleId: ownerRole.id }
+    });
+    const organization = await prisma.organization.create({ data: { name: 'Club de Prueba' } });
+    const invitation = await prisma.organizationInvitation.create({
+      data: {
+        email,
+        organizationId: organization.id,
+        invitedByUserId: inviter.id,
+        roleType: 'ORGANIZER_STAFF'
+      }
+    });
+
+    const browser = client();
+    const magicLink = await post(browser, '/api/auth/sign-in/magic-link', {
+      email,
+      callbackURL: `${baseUrl}/aceptar-invitacion`
+    });
+    expect(magicLink.status).toBe(200);
+    const verify = await browser(emailUrl(latestEmail(/Sign in/, email)), { redirect: 'manual' });
+    expect(verify.status).toBe(302);
+
+    const shortPassword = await post(browser, '/api/auth/complete-organizer-setup', {
+      firstName: 'Ana', lastName: 'Rueda', password: 'short', invitationId: invitation.id
+    });
+    expect(shortPassword.status).toBe(400);
+    expect(await shortPassword.json()).toMatchObject({ code: 'PASSWORD_TOO_SHORT' });
+
+    const completed = await post(browser, '/api/auth/complete-organizer-setup', {
+      firstName: 'Ana', lastName: 'Rueda', password: 'secure-password123', invitationId: invitation.id
+    });
+    expect(completed.status).toBe(200);
+    expect(await completed.json()).toMatchObject({ email, firstName: 'Ana', role: 'ORGANIZER_STAFF' });
+    expect(await prisma.organizer.findFirst({ where: { user: { email }, organizationId: organization.id } })).toBeTruthy();
+    expect((await prisma.organizationInvitation.findUniqueOrThrow({ where: { id: invitation.id } })).status).toBe('ACCEPTED');
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+    expect(await prisma.cyclist.findUnique({ where: { userId: user.id } })).toBeNull();
+  });
+
   it('returns 401 without a session and 403 for an authenticated cyclist without organizer access', async () => {
     const unauthenticated = await post(client(), '/api/events', {});
     expect(unauthenticated.status).toBe(401);
