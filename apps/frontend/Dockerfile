@@ -12,6 +12,7 @@ WORKDIR /app
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 COPY --from=deps /app/ ./
+COPY tsconfig.base.json ./
 COPY packages/shared/ ./packages/shared/
 COPY apps/frontend/ ./apps/frontend/
 RUN npm run build --workspace=@acs/shared

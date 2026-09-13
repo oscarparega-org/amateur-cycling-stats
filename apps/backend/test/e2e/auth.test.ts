@@ -7,6 +7,7 @@ import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testconta
 import makeFetchCookie from 'fetch-cookie';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import type { PrismaClient } from '@prisma/client';
 import type { Server } from 'node:http';
 
 type SentEmail = { to: string; subject: string; html: string };
@@ -14,7 +15,7 @@ type SentEmail = { to: string; subject: string; html: string };
 let postgres: StartedPostgreSqlContainer;
 let httpServer: Server;
 let baseUrl: string;
-let prisma: import('@prisma/client').PrismaClient;
+let prisma: PrismaClient;
 const outbox: SentEmail[] = [];
 let googleEmail = 'google-new@example.com';
 let googleNonce: string | undefined;
@@ -56,7 +57,7 @@ async function availablePort(): Promise<number> {
   await once(server, 'listening');
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('Could not allocate an E2E port');
-  await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
   return address.port;
 }
 
@@ -74,7 +75,9 @@ async function post(fetcher: typeof fetch, path: string, body?: unknown) {
 }
 
 function latestEmail(subject: RegExp, recipient?: string) {
-  const email = [...outbox].reverse().find((item) => subject.test(item.subject) && (!recipient || item.to === recipient));
+  const email = [...outbox]
+    .reverse()
+    .find((item) => subject.test(item.subject) && (!recipient || item.to === recipient));
   if (!email) throw new Error(`No email matching ${subject} was captured`);
   return email;
 }
@@ -88,7 +91,10 @@ function emailUrl(email: SentEmail) {
 async function registerAndVerify(email: string, password = 'password1234') {
   const browser = client();
   const signup = await post(browser, '/api/auth/sign-up/email', {
-    name: 'Email Cyclist', email, password, callbackURL: `${baseUrl}/verified`
+    name: 'Email Cyclist',
+    email,
+    password,
+    callbackURL: `${baseUrl}/verified`
   });
   expect(signup.status).toBe(200);
   const verification = latestEmail(/Verify your email/, email);
@@ -100,10 +106,11 @@ async function registerAndVerify(email: string, password = 'password1234') {
 async function signInWithGoogle(browser: ReturnType<typeof client>, email: string) {
   googleEmail = email;
   const start = await post(browser, '/api/auth/sign-in/social', {
-    provider: 'google', callbackURL: `${baseUrl}/google-complete`
+    provider: 'google',
+    callbackURL: `${baseUrl}/google-complete`
   });
   expect(start.status).toBe(200);
-  const payload = await start.json() as { url: string };
+  const payload = (await start.json()) as { url: string };
   const authorizationUrl = new URL(payload.url);
   googleNonce = authorizationUrl.searchParams.get('nonce') || undefined;
   const state = authorizationUrl.searchParams.get('state');
@@ -152,32 +159,59 @@ beforeAll(async () => {
     stdio: 'pipe'
   });
 
-  const [{ prisma: prismaClient }, { createAuth }, { loadAuthEnvironment }, { createApp }, { serve }] = await Promise.all([
-    import('../../src/lib/prisma.js'),
-    import('../../src/lib/auth.js'),
-    import('../../src/lib/env.js'),
-    import('../../src/app.js'),
-    import('@hono/node-server')
-  ]);
+  const [{ prisma: prismaClient }, { createAuth }, { loadAuthEnvironment }, { createApp }, { serve }] =
+    await Promise.all([
+      import('../../src/lib/prisma.js'),
+      import('../../src/lib/auth.js'),
+      import('../../src/lib/env.js'),
+      import('../../src/app.js'),
+      import('@hono/node-server')
+    ]);
   prisma = prismaClient;
-  await prisma.role.createMany({
-    data: ['PUBLIC', 'CYCLIST', 'ORGANIZER_STAFF', 'ORGANIZER_OWNER', 'ADMIN'].map((name) => ({ name })),
-    skipDuplicates: true
-  });
   const testAuth = createAuth({
     database: prisma,
     environment: loadAuthEnvironment(process.env),
-    emailSender: async (message) => { outbox.push(message); }
+    emailSender: async (message) => {
+      outbox.push(message);
+    }
   });
   httpServer = serve({ fetch: createApp(testAuth).fetch, port, hostname: '127.0.0.1' });
   if (!httpServer.listening) await once(httpServer, 'listening');
-}, 120_000);
+}, 300_000);
 
 afterAll(async () => {
   googleMocks.close();
-  if (httpServer) await new Promise<void>((resolve, reject) => httpServer.close((error) => error ? reject(error) : resolve()));
+  if (httpServer)
+    await new Promise<void>((resolve, reject) => httpServer.close((error) => (error ? reject(error) : resolve())));
   if (prisma) await prisma.$disconnect();
   if (postgres) await postgres.stop();
+});
+
+describe('Production database bootstrap', () => {
+  it('installs required reference data through migrations', async () => {
+    const [roles, cyclistGenders, categories, categoryGenders, categoryLengths] = await Promise.all([
+      prisma.role.findMany({ select: { name: true } }),
+      prisma.cyclistGender.findMany({ select: { name: true } }),
+      prisma.raceCategory.findMany({ select: { name: true, isGlobal: true, isDefault: true } }),
+      prisma.raceCategoryGender.findMany({ select: { name: true, isGlobal: true, isDefault: true } }),
+      prisma.raceCategoryLength.findMany({ select: { name: true, isGlobal: true, isDefault: true } })
+    ]);
+
+    expect(roles).toHaveLength(5);
+    expect(roles.map(({ name }) => name)).toEqual(
+      expect.arrayContaining(['PUBLIC', 'CYCLIST', 'ORGANIZER_STAFF', 'ORGANIZER_OWNER', 'ADMIN'])
+    );
+    expect(cyclistGenders.map(({ name }) => name)).toEqual(expect.arrayContaining(['M', 'F']));
+    expect(categories).toHaveLength(26);
+    expect(categories.every(({ isGlobal }) => isGlobal)).toBe(true);
+    expect(categories.filter(({ isDefault }) => isDefault).map(({ name }) => name)).toEqual(['Absoluta']);
+    expect(categoryGenders).toHaveLength(3);
+    expect(categoryGenders.every(({ isGlobal }) => isGlobal)).toBe(true);
+    expect(categoryGenders.filter(({ isDefault }) => isDefault).map(({ name }) => name)).toEqual(['Abierto']);
+    expect(categoryLengths).toHaveLength(4);
+    expect(categoryLengths.every(({ isGlobal }) => isGlobal)).toBe(true);
+    expect(categoryLengths.filter(({ isDefault }) => isDefault).map(({ name }) => name)).toEqual(['Única']);
+  });
 });
 
 describe('Hono authentication', () => {
@@ -185,7 +219,10 @@ describe('Hono authentication', () => {
     const email = 'email-flow@example.com';
     const preVerification = client();
     const signup = await post(preVerification, '/api/auth/sign-up/email', {
-      name: 'Email Flow', email, password: 'password1234', callbackURL: `${baseUrl}/verified`
+      name: 'Email Flow',
+      email,
+      password: 'password1234',
+      callbackURL: `${baseUrl}/verified`
     });
     expect(signup.status).toBe(200);
     expect(signup.headers.get('set-cookie')).toBeNull();
@@ -195,17 +232,25 @@ describe('Hono authentication', () => {
     expect(userBefore?.cyclist).toBeTruthy();
 
     const duplicate = await post(client(), '/api/auth/sign-up/email', {
-      name: 'Duplicate Attempt', email, password: 'another-password1234', callbackURL: `${baseUrl}/verified`
+      name: 'Duplicate Attempt',
+      email,
+      password: 'another-password1234',
+      callbackURL: `${baseUrl}/verified`
     });
     expect(duplicate.status).toBe(200);
     expect(await prisma.user.count({ where: { email } })).toBe(1);
 
-    const verificationCount = outbox.filter((message) => message.to === email && /Verify your email/.test(message.subject)).length;
+    const verificationCount = outbox.filter(
+      (message) => message.to === email && /Verify your email/.test(message.subject)
+    ).length;
     const resend = await post(client(), '/api/auth/send-verification-email', {
-      email, callbackURL: `${baseUrl}/verified`
+      email,
+      callbackURL: `${baseUrl}/verified`
     });
     expect(resend.status).toBe(200);
-    expect(outbox.filter((message) => message.to === email && /Verify your email/.test(message.subject))).toHaveLength(verificationCount + 1);
+    expect(outbox.filter((message) => message.to === email && /Verify your email/.test(message.subject))).toHaveLength(
+      verificationCount + 1
+    );
 
     const blockedLogin = await post(client(), '/api/auth/sign-in/email', { email, password: 'password1234' });
     expect(blockedLogin.status).toBe(403);
@@ -234,10 +279,12 @@ describe('Hono authentication', () => {
     await post(browser, '/api/auth/sign-in/email', { email, password: 'password1234' });
 
     const known = await post(client(), '/api/auth/request-password-reset', {
-      email, redirectTo: `${baseUrl}/reset-password`
+      email,
+      redirectTo: `${baseUrl}/reset-password`
     });
     const unknown = await post(client(), '/api/auth/request-password-reset', {
-      email: 'unknown@example.com', redirectTo: `${baseUrl}/reset-password`
+      email: 'unknown@example.com',
+      redirectTo: `${baseUrl}/reset-password`
     });
     expect(known.status).toBe(200);
     expect(await known.json()).toEqual(await unknown.json());
@@ -256,7 +303,8 @@ describe('Hono authentication', () => {
     const googleCallback = await signInWithGoogle(googleBrowser, 'google-new@example.com');
     expect(googleCallback.status).toBe(302);
     const googleUser = await prisma.user.findUnique({
-      where: { email: 'google-new@example.com' }, include: { cyclist: true, accounts: true }
+      where: { email: 'google-new@example.com' },
+      include: { cyclist: true, accounts: true }
     });
     expect(googleUser?.emailVerified).toBe(true);
     expect(googleUser?.cyclist).toBeTruthy();
@@ -267,9 +315,14 @@ describe('Hono authentication', () => {
     const before = await prisma.user.findUniqueOrThrow({ where: { email: linkedEmail } });
     const linkedCallback = await signInWithGoogle(client(), linkedEmail);
     expect(linkedCallback.status).toBe(302);
-    const after = await prisma.user.findUniqueOrThrow({ where: { email: linkedEmail }, include: { accounts: true, cyclist: true } });
+    const after = await prisma.user.findUniqueOrThrow({
+      where: { email: linkedEmail },
+      include: { accounts: true, cyclist: true }
+    });
     expect(after.id).toBe(before.id);
-    expect(after.accounts.map((account) => account.providerId)).toEqual(expect.arrayContaining(['credential', 'google']));
+    expect(after.accounts.map((account) => account.providerId)).toEqual(
+      expect.arrayContaining(['credential', 'google'])
+    );
     expect(await prisma.cyclist.count({ where: { userId: after.id } })).toBe(1);
   });
 
@@ -299,18 +352,28 @@ describe('Hono authentication', () => {
     expect(verify.status).toBe(302);
 
     const shortPassword = await post(browser, '/api/auth/complete-organizer-setup', {
-      firstName: 'Ana', lastName: 'Rueda', password: 'short', invitationId: invitation.id
+      firstName: 'Ana',
+      lastName: 'Rueda',
+      password: 'short',
+      invitationId: invitation.id
     });
     expect(shortPassword.status).toBe(400);
     expect(await shortPassword.json()).toMatchObject({ code: 'PASSWORD_TOO_SHORT' });
 
     const completed = await post(browser, '/api/auth/complete-organizer-setup', {
-      firstName: 'Ana', lastName: 'Rueda', password: 'secure-password123', invitationId: invitation.id
+      firstName: 'Ana',
+      lastName: 'Rueda',
+      password: 'secure-password123',
+      invitationId: invitation.id
     });
     expect(completed.status).toBe(200);
     expect(await completed.json()).toMatchObject({ email, firstName: 'Ana', role: 'ORGANIZER_STAFF' });
-    expect(await prisma.organizer.findFirst({ where: { user: { email }, organizationId: organization.id } })).toBeTruthy();
-    expect((await prisma.organizationInvitation.findUniqueOrThrow({ where: { id: invitation.id } })).status).toBe('ACCEPTED');
+    expect(
+      await prisma.organizer.findFirst({ where: { user: { email }, organizationId: organization.id } })
+    ).toBeTruthy();
+    expect((await prisma.organizationInvitation.findUniqueOrThrow({ where: { id: invitation.id } })).status).toBe(
+      'ACCEPTED'
+    );
     const user = await prisma.user.findUniqueOrThrow({ where: { email } });
     expect(await prisma.cyclist.findUnique({ where: { userId: user.id } })).toBeNull();
   });
@@ -326,8 +389,14 @@ describe('Hono authentication', () => {
     const organization = await prisma.organization.create({ data: { name: 'Restricted Org' } });
     const cyclist = await prisma.user.findUniqueOrThrow({ where: { email: 'authorization@example.com' } });
     const forbidden = await post(browser, '/api/events', {
-      name: 'Private Event', description: '', dateTime: new Date().toISOString(), year: new Date().getFullYear(),
-      country: 'MX', state: 'CDMX', organizationId: organization.id, createdBy: cyclist.id
+      name: 'Private Event',
+      description: '',
+      dateTime: new Date().toISOString(),
+      year: new Date().getFullYear(),
+      country: 'MX',
+      state: 'CDMX',
+      organizationId: organization.id,
+      createdBy: cyclist.id
     });
     expect(forbidden.status).toBe(403);
   });

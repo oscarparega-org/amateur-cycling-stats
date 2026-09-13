@@ -1,19 +1,13 @@
 import type { RaceCategoryAge, RaceCategoryGender, RaceCategoryDistance } from '@acs/shared';
 import { PG_ERROR_CODES } from '@acs/shared';
 import { prisma } from '../lib/prisma.js';
-import {
-  adaptAgeCategory,
-  adaptGenderCategory,
-  adaptDistanceCategory
-} from '../adapters/categories.adapter.js';
+import { adaptAgeCategory, adaptGenderCategory, adaptDistanceCategory } from '../adapters/categories.adapter.js';
 
 // === Age Categories ===
 
 export async function getAgeCategories(organizationId?: string): Promise<RaceCategoryAge[]> {
   const cats = await prisma.raceCategory.findMany({
-    where: organizationId
-      ? { OR: [{ isGlobal: true }, { organizationId }] }
-      : { isGlobal: true },
+    where: organizationId ? { OR: [{ isGlobal: true }, { organizationId }] } : { isGlobal: true },
     orderBy: { name: 'asc' }
   });
   return cats.map(adaptAgeCategory);
@@ -64,9 +58,7 @@ export async function deleteAgeCategory(id: string): Promise<{ success: boolean;
 
 export async function getGenderCategories(organizationId?: string): Promise<RaceCategoryGender[]> {
   const cats = await prisma.raceCategoryGender.findMany({
-    where: organizationId
-      ? { OR: [{ isGlobal: true }, { organizationId }] }
-      : { isGlobal: true },
+    where: organizationId ? { OR: [{ isGlobal: true }, { organizationId }] } : { isGlobal: true },
     orderBy: { name: 'asc' }
   });
   return cats.map(adaptGenderCategory);
@@ -87,10 +79,7 @@ export async function createGenderCategory(data: {
   return adaptGenderCategory(cat);
 }
 
-export async function updateGenderCategory(
-  id: string,
-  data: { name?: string }
-): Promise<RaceCategoryGender | null> {
+export async function updateGenderCategory(id: string, data: { name?: string }): Promise<RaceCategoryGender | null> {
   const cat = await prisma.raceCategoryGender.findUnique({ where: { id } });
   if (!cat) return null;
   const updated = await prisma.raceCategoryGender.update({ where: { id }, data });
@@ -113,9 +102,7 @@ export async function deleteGenderCategory(id: string): Promise<{ success: boole
 
 export async function getDistanceCategories(organizationId?: string): Promise<RaceCategoryDistance[]> {
   const cats = await prisma.raceCategoryLength.findMany({
-    where: organizationId
-      ? { OR: [{ isGlobal: true }, { organizationId }] }
-      : { isGlobal: true },
+    where: organizationId ? { OR: [{ isGlobal: true }, { organizationId }] } : { isGlobal: true },
     orderBy: { name: 'asc' }
   });
   return cats.map(adaptDistanceCategory);

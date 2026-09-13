@@ -5,5 +5,9 @@ import { getServerSession } from '@/lib/backend';
 
 export default async function RecoverPasswordPage() {
   if (await getServerSession()) redirect('/');
-  return <AuthShell title="Recupera el acceso" intro="Te enviaremos un enlace seguro para definir una contraseña nueva."><RecoverForm /></AuthShell>;
+  return (
+    <AuthShell title="Recupera el acceso" intro="Te enviaremos un enlace seguro para definir una contraseña nueva.">
+      <RecoverForm />
+    </AuthShell>
+  );
 }

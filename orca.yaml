@@ -1,0 +1,11 @@
+defaultTabs:
+  - title: App
+    command: npm run wt:dev
+
+scripts:
+  setup: |
+    set -e
+    npm ci
+    npm run wt:init
+  archive: |
+    npm run wt:down

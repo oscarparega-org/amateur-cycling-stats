@@ -10,7 +10,7 @@ export function magicLinkEmail(url: string) {
         </a>
         <p style="color: #666; font-size: 14px; margin-top: 16px;">If you didn't request this, you can safely ignore this email.</p>
       </div>
-    `,
+    `
   };
 }
 
@@ -26,7 +26,7 @@ export function resetPasswordEmail(url: string) {
         </a>
         <p style="color: #666; font-size: 14px; margin-top: 16px;">If you didn't request this, you can safely ignore this email.</p>
       </div>
-    `,
+    `
   };
 }
 
@@ -42,7 +42,7 @@ export function verificationEmail(url: string) {
         </a>
         <p style="color: #666; font-size: 14px; margin-top: 16px;">If you didn't create this account, you can safely ignore this email.</p>
       </div>
-    `,
+    `
   };
 }
 
@@ -58,6 +58,6 @@ export function invitationEmail(url: string, organizationName: string) {
         </a>
         <p style="color: #666; font-size: 14px; margin-top: 16px;">If you weren't expecting this, you can safely ignore this email.</p>
       </div>
-    `,
+    `
   };
 }

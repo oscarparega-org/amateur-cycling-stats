@@ -3,7 +3,7 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   agentRules: false,
-  allowedDevOrigins: ['127.0.0.1'],
+  allowedDevOrigins: ['127.0.0.1', '*.localhost'],
   output: 'standalone',
   outputFileTracingRoot: path.join(process.cwd(), '../..'),
   transpilePackages: ['@acs/shared'],

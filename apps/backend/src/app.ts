@@ -11,12 +11,15 @@ type AuthInstance = typeof defaultAuth;
 export function createApp(auth: AuthInstance = defaultAuth) {
   const app = new Hono<{ Variables: AppVariables }>();
 
-  app.use('*', cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    allowHeaders: ['Content-Type', 'Authorization'],
-    allowMethods: ['POST', 'GET', 'OPTIONS', 'PATCH', 'DELETE'],
-    credentials: true
-  }));
+  app.use(
+    '*',
+    cors({
+      origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+      allowHeaders: ['Content-Type', 'Authorization'],
+      allowMethods: ['POST', 'GET', 'OPTIONS', 'PATCH', 'DELETE'],
+      credentials: true
+    })
+  );
   app.use('*', errorHandler);
   app.use('*', createSessionMiddleware(auth));
 

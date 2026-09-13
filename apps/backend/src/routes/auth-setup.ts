@@ -37,9 +37,8 @@ authSetup.post('/complete-organizer-setup', async (c) => {
   }
 
   // Determine role from invitation
-  const roleName = invitation.roleType === 'ORGANIZER_OWNER'
-    ? RoleTypeEnum.ORGANIZER_OWNER
-    : RoleTypeEnum.ORGANIZER_STAFF;
+  const roleName =
+    invitation.roleType === 'ORGANIZER_OWNER' ? RoleTypeEnum.ORGANIZER_OWNER : RoleTypeEnum.ORGANIZER_STAFF;
 
   const role = await prisma.role.findUnique({ where: { name: roleName } });
   if (!role) return c.json({ error: 'Role not found' }, 500);

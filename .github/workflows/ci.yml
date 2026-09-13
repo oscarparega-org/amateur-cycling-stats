@@ -1,99 +1,101 @@
-name: CI
+name: CI and development deployment
 
 on:
   pull_request:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: dev-${{ github.repository_id }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   quality:
     name: Quality
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: acs_browser_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U test -d acs_browser_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://test:test@localhost:5432/acs_browser_test
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type-check
-        run: npm run check
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Unit tests
-        run: npm run test
-
-      - name: Install Chromium for frontend browser tests
-        run: npx playwright install --with-deps chromium
-
-      - name: Frontend browser tests
-        run: npm run test:e2e --workspace=acs-frontend
-
-      - name: Backend end-to-end tests when configured
-        run: npm run test:e2e --workspace=acs-backend --if-present
-
-      - name: Production build
-        run: npm run build
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm audit --audit-level=high
+      - run: npm run check
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:e2e
+      - run: npm run build
+      - run: npx prisma migrate deploy --schema apps/backend/prisma/schema.prisma
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e --workspace=acs-frontend
+      - run: npm run test:browser
 
   containers:
     name: Production images
     needs: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
-      POSTGRES_USER: acs_ci
-      POSTGRES_PASSWORD: ci-only-placeholder
-      POSTGRES_DB: acs_ci
+      SERVICE_USER_POSTGRES: acs_ci
+      SERVICE_PASSWORD_64_POSTGRES: ci-only-placeholder
+      SERVICE_BASE64_64_AUTH: ci-only-secret-with-at-least-32-characters
       FRONTEND_URL: https://dev.example.invalid
       PUBLIC_API_URL: https://api-dev.example.invalid
       TRUSTED_ORIGINS: https://dev.example.invalid
-      BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
-      BETTER_AUTH_URL: https://dev.example.invalid
+      RESEND_API_KEY: re_ci_placeholder
+      EMAIL_FROM: noreply@example.invalid
+      GOOGLE_CLIENT_ID: ci.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: ci-only-placeholder
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Validate production Compose configuration
-        run: docker compose -f docker-compose.coolify.yml config --quiet
-
-      - name: Build production images
-        run: docker compose -f docker-compose.coolify.yml build
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Validate and build production images
+        run: npm run build:containers
 
   deploy-development:
     name: Deploy development
-    needs: containers
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [quality, containers]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 30
     environment:
       name: development
       url: ${{ vars.DEV_URL }}
+    env:
+      COOLIFY_API_URL: ${{ vars.COOLIFY_API_URL }}
+      COOLIFY_SERVER_UUID: ${{ vars.COOLIFY_SERVER_UUID }}
+      DEPLOY_BASE_DOMAIN: ${{ vars.DEPLOY_BASE_DOMAIN }}
+      EMAIL_FROM: ${{ vars.EMAIL_FROM }}
+      COOLIFY_WRITE_TOKEN: ${{ secrets.COOLIFY_WRITE_TOKEN }}
+      COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
     steps:
-      - name: Trigger Coolify deployment
-        env:
-          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
-          COOLIFY_DEV_WEBHOOK: ${{ secrets.COOLIFY_DEV_WEBHOOK }}
-        run: |
-          test -n "$COOLIFY_API_TOKEN"
-          test -n "$COOLIFY_DEV_WEBHOOK"
-          curl --fail-with-body --silent --show-error \
-            --request POST "$COOLIFY_DEV_WEBHOOK" \
-            --header "Authorization: Bearer $COOLIFY_API_TOKEN"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - name: Reconcile and deploy exact commit
+        run: node scripts/coolify.mjs

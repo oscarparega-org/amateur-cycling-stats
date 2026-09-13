@@ -1,10 +1,5 @@
 import type { Race } from '@acs/shared';
-import type {
-  Race as PrismaRace,
-  RaceCategory,
-  RaceCategoryGender,
-  RaceCategoryLength
-} from '@prisma/client';
+import type { Race as PrismaRace, RaceCategory, RaceCategoryGender, RaceCategoryLength } from '@prisma/client';
 
 type PrismaRaceWithCategories = PrismaRace & {
   categoryAge: RaceCategory;

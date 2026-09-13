@@ -1,16 +1,10 @@
 import { Resend } from 'resend';
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 const DEFAULT_FROM = process.env.EMAIL_FROM || 'onboarding@resend.dev';
 
-export async function sendEmail(opts: {
-  to: string;
-  subject: string;
-  html: string;
-}): Promise<void> {
+export async function sendEmail(opts: { to: string; subject: string; html: string }): Promise<void> {
   if (!resend) {
     console.log(`[EMAIL] (dev) To: ${opts.to} | Subject: ${opts.subject}`);
     console.log(`[EMAIL] (dev) Body: ${opts.html}`);
@@ -22,7 +16,7 @@ export async function sendEmail(opts: {
       from: DEFAULT_FROM,
       to: opts.to,
       subject: opts.subject,
-      html: opts.html,
+      html: opts.html
     });
   } catch (error) {
     console.error('[EMAIL] Failed to send email:', error);

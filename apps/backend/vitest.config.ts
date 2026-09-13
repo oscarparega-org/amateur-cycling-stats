@@ -17,7 +17,7 @@ export default defineConfig({
           environment: 'node',
           fileParallelism: false,
           testTimeout: 120_000,
-          hookTimeout: 120_000
+          hookTimeout: 300_000
         }
       }
     ]

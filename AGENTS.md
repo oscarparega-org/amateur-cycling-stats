@@ -18,13 +18,26 @@ Run commands from the repository root unless a task requires otherwise.
 - `npm run build` — build all workspaces in dependency order
 - `npm run check` — run TypeScript checks across the monorepo
 - `npm run lint` — run configured workspace linters
-- `npm run test` — run configured workspace test scripts
+- `npm run test` — run workspace and infrastructure unit tests
+- `npm run test:browser` — run the Playwright application smoke test against a disposable `_test` database
+- `npm run format:check` — verify repository formatting
 - `npm run <script> --workspace=<workspace-name>` — target one workspace, for example `npm run check --workspace=acs-backend`
 - `npm run db:generate`, `npm run db:migrate`, `npm run db:seed` — run Prisma tasks through Turborepo
 
 Use npm and keep `package-lock.json` in sync when dependencies change.
 
-The current frontend has ESLint configured. Backend and shared lint scripts, and the frontend/backend test scripts, are placeholders. Do not report placeholder scripts as meaningful verification.
+Linting, formatting, backend tests, frontend component tests, infrastructure tests, and browser smoke tests are real
+quality gates. Keep new tooling code covered by focused tests.
+
+## Orca Worktrees
+
+- Keep setup, App terminal, and archive hooks in `orca.yaml`; do not duplicate them in Orca's local repository settings.
+- Use `npm run wt:dev` for an isolated PostgreSQL volume and worktree-specific API, frontend, and database ports.
+- Never copy or commit `.env.worktree`; it contains local secrets and is validated against its checkout path.
+- Use the URLs printed by `wt:dev` or `wt:status` instead of assuming the default development ports.
+- Let the Orca archive hook run `wt:down`. For explicit removal, run `wt:remove` from a different checkout and use
+  `--force` only when intentionally discarding uncommitted changes.
+- Do not delete shared Docker images or build caches during worktree cleanup.
 
 ## Branch Naming
 
@@ -42,6 +55,7 @@ The current frontend has ESLint configured. Backend and shared lint scripts, and
 - In the frontend, follow Next.js App Router conventions and use the `@/` alias for imports from `apps/frontend/src`.
 - Keep custom authentication routes registered before Better Auth's `/api/auth/*` wildcard handler.
 - Never commit secrets or expose values from `.env`. Update the relevant `.env.example` with safe placeholders when adding configuration.
+- Keep GitHub Actions as the only deployment controller. Deploy the exact tested SHA and leave Coolify auto-deploy off.
 
 ## Database Changes
 

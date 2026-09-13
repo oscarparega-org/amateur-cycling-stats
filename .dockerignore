@@ -5,10 +5,15 @@ amateur-cycling-stats-supabase
 docs
 *.md
 .turbo
+**/.turbo
 .next
+**/.next
 *.tsbuildinfo
 dist
+**/dist
 build
 .svelte-kit
+test-results
+playwright-report
 .env
 .env.*

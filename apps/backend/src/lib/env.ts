@@ -24,7 +24,14 @@ export function loadAuthEnvironment(source: NodeJS.ProcessEnv = process.env): Au
   );
   const betterAuthUrl = required(source, 'BETTER_AUTH_URL', 'http://localhost:3000');
   const origins = source.TRUSTED_ORIGINS || source.FRONTEND_URL || 'http://localhost:5173';
-  const trustedOrigins = [...new Set(origins.split(',').map((origin) => origin.trim()).filter(Boolean))];
+  const trustedOrigins = [
+    ...new Set(
+      origins
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean)
+    )
+  ];
   const googleClientId = source.GOOGLE_CLIENT_ID?.trim() || undefined;
   const googleClientSecret = source.GOOGLE_CLIENT_SECRET?.trim() || undefined;
   const resendApiKey = source.RESEND_API_KEY?.trim() || undefined;

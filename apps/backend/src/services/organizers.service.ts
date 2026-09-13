@@ -17,10 +17,7 @@ export async function getOrganizersCountByOrganizationId(organizationId: string)
   return prisma.organizer.count({ where: { organizationId } });
 }
 
-export async function updateOrganizer(
-  id: string,
-  data: PartialOrganizer
-): Promise<Organizer | null> {
+export async function updateOrganizer(id: string, data: PartialOrganizer): Promise<Organizer | null> {
   const organizer = await prisma.organizer.findUnique({
     where: { id },
     include: organizerInclude
@@ -39,9 +36,7 @@ export async function updateOrganizer(
 
     // Update role if roleType changed
     if (data.roleType !== undefined) {
-      const roleName = data.roleType === RoleTypeEnum.ORGANIZER_OWNER
-        ? 'ORGANIZER_OWNER'
-        : 'ORGANIZER_STAFF';
+      const roleName = data.roleType === RoleTypeEnum.ORGANIZER_OWNER ? 'ORGANIZER_OWNER' : 'ORGANIZER_STAFF';
       const role = await tx.role.findUnique({ where: { name: roleName } });
       if (role) {
         await tx.user.update({

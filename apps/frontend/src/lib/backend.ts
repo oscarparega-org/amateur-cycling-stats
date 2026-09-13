@@ -2,8 +2,10 @@ import { cookies } from 'next/headers';
 import type { AuthSession } from './auth-types';
 
 export function backendUrl(path: string): string {
-  const baseUrl = (process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000')
-    .replace(/\/$/, '');
+  const baseUrl = (process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(
+    /\/$/,
+    ''
+  );
   return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
