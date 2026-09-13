@@ -225,6 +225,48 @@ describe('Production database bootstrap', () => {
 });
 
 describe('Hono authentication', () => {
+  it('returns the authenticated application role for route guards', async () => {
+    const anonymous = await client()(`${baseUrl}/api/auth/current-user`);
+    expect(anonymous.status).toBe(401);
+
+    const browser = client();
+    const login = await post(browser, '/api/auth/sign-in/email', {
+      email: 'admin@acs.com',
+      password: '#admin123'
+    });
+    expect(login.status).toBe(200);
+
+    const response = await browser(`${baseUrl}/api/auth/current-user`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      email: 'admin@acs.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      roleType: 'ADMIN',
+      status: 'ACTIVE'
+    });
+  });
+
+  it('creates admin-managed organizations as inactive', async () => {
+    const browser = client();
+    await post(browser, '/api/auth/sign-in/email', {
+      email: 'admin@acs.com',
+      password: '#admin123'
+    });
+
+    const response = await browser(`${baseUrl}/api/organizations`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: '  Ruta Centro  ', description: '  Calendario regional  ' })
+    });
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      name: 'Ruta Centro',
+      description: 'Calendario regional',
+      state: 'INACTIVE'
+    });
+  });
+
   it('signs in the seeded admin, organizer, and cyclist accounts with complete profiles', async () => {
     const credentials = [
       { email: 'admin@acs.com', password: '#admin123' },

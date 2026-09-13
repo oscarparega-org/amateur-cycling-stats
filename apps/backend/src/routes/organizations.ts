@@ -3,20 +3,22 @@ import { z } from 'zod';
 import * as orgService from '../services/organizations.service.js';
 import { requireRole, requireOrgMember } from '../lib/auth-helpers.js';
 import { RoleTypeEnum } from '@acs/shared';
-import { atLeastOneField, nullableOptionalText, optionalText, parseJson, shortText } from '../lib/validation.js';
+import { atLeastOneField, parseJson } from '../lib/validation.js';
 
 const organizations = new Hono();
+const organizationName = z.string().trim().min(3).max(120);
+const organizationDescription = z.string().trim().max(1_000).nullable().optional();
 
 const createOrganizationSchema = z
   .object({
-    name: shortText,
-    description: optionalText
+    name: organizationName,
+    description: organizationDescription
   })
   .strict();
 
 const updateOrganizationSchema = atLeastOneField({
-  name: shortText.optional(),
-  description: nullableOptionalText,
+  name: organizationName.optional(),
+  description: organizationDescription,
   state: z.enum(['ACTIVE', 'INACTIVE']).optional()
 });
 
@@ -36,7 +38,7 @@ organizations.get('/:id', async (c) => {
 organizations.post('/', async (c) => {
   await requireRole(c, [RoleTypeEnum.ADMIN]);
   const body = await parseJson(c, createOrganizationSchema);
-  const org = await orgService.createOrganization(body);
+  const org = await orgService.createOrganization({ ...body, state: 'INACTIVE' });
   return c.json(org, 201);
 });
 

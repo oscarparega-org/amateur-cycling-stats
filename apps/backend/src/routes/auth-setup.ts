@@ -18,6 +18,29 @@ const completeOrganizerSetupSchema = z
   .strict();
 
 /**
+ * GET /api/auth/current-user
+ * Returns the application role needed to route authenticated users.
+ */
+authSetup.get('/current-user', async (c) => {
+  const user = requireAuth(c);
+  const currentUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    include: { role: true }
+  });
+
+  if (!currentUser?.role) return c.json({ error: 'User role not found' }, 404);
+
+  return c.json({
+    id: currentUser.id,
+    email: currentUser.email,
+    firstName: currentUser.firstName,
+    lastName: currentUser.lastName,
+    roleType: currentUser.role.name,
+    status: currentUser.status
+  });
+});
+
+/**
  * POST /api/auth/complete-organizer-setup
  * Completes the organizer invitation flow after magic link authentication.
  * Body: { firstName, lastName, password, invitationId }

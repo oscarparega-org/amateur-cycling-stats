@@ -1,5 +1,15 @@
 import { cookies } from 'next/headers';
 import type { AuthSession } from './auth-types';
+import type { RoleTypeEnum, UserStatus } from '@acs/shared';
+
+export type CurrentUserContext = {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  roleType: RoleTypeEnum;
+  status: UserStatus;
+};
 
 export function backendUrl(path: string): string {
   const baseUrl = (process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(
@@ -28,6 +38,16 @@ export async function getServerSession(): Promise<AuthSession | null> {
     const response = await backendFetch('/api/auth/get-session');
     if (!response.ok) return null;
     return (await response.json()) as AuthSession | null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getCurrentUserContext(): Promise<CurrentUserContext | null> {
+  try {
+    const response = await backendFetch('/api/auth/current-user');
+    if (!response.ok) return null;
+    return (await response.json()) as CurrentUserContext;
   } catch {
     return null;
   }
