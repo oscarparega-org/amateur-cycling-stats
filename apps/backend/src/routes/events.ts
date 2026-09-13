@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import * as eventsService from '../services/events.service.js';
 import { requireAuth, requireOrgMember, requireEventOrgMember } from '../lib/auth-helpers.js';
 
@@ -24,6 +25,16 @@ events.get('/', async (c) => {
 events.get('/:id', async (c) => {
   const event = await eventsService.getEventById(c.req.param('id'));
   if (!event) return c.json({ error: 'Not found' }, 404);
+  if (!event.isPublicVisible) {
+    try {
+      await requireEventOrgMember(c, event.id);
+    } catch (error: unknown) {
+      if (error instanceof HTTPException && (error.status === 401 || error.status === 403)) {
+        return c.json({ error: 'Not found' }, 404);
+      }
+      throw error;
+    }
+  }
   return c.json(event);
 });
 
