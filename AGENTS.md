@@ -10,6 +10,23 @@ This is an npm workspaces monorepo orchestrated by Turborepo.
 
 Treat `archive/` as reference-only and do not edit it unless the task explicitly targets archived code. Do not edit generated or dependency directories such as `node_modules/`, `.next/`, `dist/`, or `.turbo/`.
 
+## Product and Feature State
+
+- The active product UI is Spanish-language. Preserve the established Spanish copy and `es-MX` date formatting unless
+  a task explicitly introduces localization or another locale.
+- `/` lists upcoming public events and `/eventos/[id]` shows a public event. Public discovery must never expose hidden
+  events or races.
+- `/admin` is administrator-only. Its implemented scope is organization list/create/view/edit and active/inactive
+  lifecycle management; permanent organization deletion exists only in the API.
+- `/organizer` is organizer-only and selects the first organization available to the signed-in organizer. Organization
+  pages support event list/filter/create/edit/publish/show/hide and draft deletion.
+- Authentication includes email/password registration, email verification, Google sign-in, password reset, and
+  organizer invitation magic links. New self-service users receive the `CYCLIST` role.
+- Categories, races, race results, cyclists, organizers, and invitations have backend APIs but do not yet have complete
+  management UI. Do not describe API availability as frontend feature completion.
+- The active role model has one `ORGANIZER` role per organization membership. Do not restore legacy owner/staff
+  distinctions from `archive/`.
+
 ## Commands
 
 Run commands from the repository root unless a task requires otherwise.
@@ -19,8 +36,12 @@ Run commands from the repository root unless a task requires otherwise.
 - `npm run check` — run TypeScript checks across the monorepo
 - `npm run lint` — run configured workspace linters
 - `npm run test` — run workspace and infrastructure unit tests
+- `npm run test:e2e` — run backend authentication E2E tests with Testcontainers
 - `npm run test:browser` — run the Playwright application smoke test against a disposable `_test` database
+- `npm run build:containers` — build and validate the production images
 - `npm run format:check` — verify repository formatting
+- `npm run precommit` — run formatting, type checking, linting, and unit/component/infrastructure tests
+- `npm run prepush` — run the complete local CI-equivalent quality gate
 - `npm run <script> --workspace=<workspace-name>` — target one workspace, for example `npm run check --workspace=acs-backend`
 - `npm run db:generate`, `npm run db:migrate`, `npm run db:seed` — run Prisma tasks through Turborepo
 
@@ -53,7 +74,20 @@ quality gates. Keep new tooling code covered by focused tests.
 - In the backend, preserve the route -> service -> Prisma/adapter boundary. Routes handle HTTP concerns, services implement application behavior and persistence calls, and adapters map database records to shared domain types.
 - Keep `.js` extensions on relative imports in backend and shared TypeScript source; these workspaces emit ESM.
 - In the frontend, follow Next.js App Router conventions and use the `@/` alias for imports from `apps/frontend/src`.
+- Prefer server components for data reads and server actions for protected mutations. Use `backendFetch` so server-side
+  requests forward the session cookie, opt out of stale caching, and preserve the frontend/backend boundary.
+- Keep typed Next.js routes intact. Dynamic organizer/admin links may require `Route` typing where the compiler cannot
+  infer the route.
+- Keep client-side validation aligned with the backend Zod schemas, while treating backend validation and
+  authorization as authoritative.
 - Keep custom authentication routes registered before Better Auth's `/api/auth/*` wildcard handler.
+- Preserve the access model: public reads only return public event/race/result data; global category writes require an
+  admin; organization-scoped writes require an admin or membership in that organization; event, race, and result
+  mutations inherit authorization through their parent organization.
+- Do not trust role, status, organization membership, or invitation ownership from request payloads. These fields are
+  server-owned and must be established from the session and database.
+- Events are created as hidden drafts. Publishing sets the event to `AVAILABLE` and public; only draft events may be
+  deleted through the current organizer workflow.
 - Never commit secrets or expose values from `.env`. Update the relevant `.env.example` with safe placeholders when adding configuration.
 - Keep GitHub Actions as the only deployment controller. Deploy the exact tested SHA and leave Coolify auto-deploy off.
 
@@ -68,6 +102,11 @@ quality gates. Keep new tooling code covered by focused tests.
 - Run the narrowest relevant checks while iterating.
 - Before handoff, run `npm run check` and the relevant workspace lint/build commands when practical.
 - Add or update tests when a real test framework exists for the affected workspace. Until then, clearly state that automated test coverage is unavailable rather than treating the placeholder test command as validation.
+- Frontend component and utility tests use Vitest and Testing Library. Frontend authentication-flow E2E tests live in
+  `apps/frontend/test/e2e`; full-application smoke tests live in `tests/browser`.
+- Backend unit tests use the `unit` Vitest project. Authentication E2E tests use Testcontainers and require Docker.
+- Browser tests must use a disposable PostgreSQL database whose name ends in `_test`; never point them at a development
+  or production database.
 - Report any skipped or failing check and the reason.
 
 ## OpenSpec
