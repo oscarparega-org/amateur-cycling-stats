@@ -72,7 +72,36 @@ test('reconciliation pins an existing application to the tested SHA', async () =
   const update = calls.find(([path]) => path === '/applications/app-1');
   assert.equal(update[2].git_commit_sha, 'abc123');
   assert.equal(update[2].is_auto_deploy_enabled, false);
+  assert.equal(update[2].destination_uuid, undefined);
   assert.equal(calls.filter(([, method]) => method === 'POST').length, 0);
+});
+
+test('reconciliation sends the destination only when creating an application', async () => {
+  const config = buildDeploymentConfig(environment);
+  const calls = [];
+  const responses = new Map([
+    ['/projects', [{ uuid: 'project-1', name: config.projectName }]],
+    ['/projects/project-1', { environments: [{ uuid: 'env-1', name: config.environmentName }] }],
+    ['/servers/server-1/destinations', [{ uuid: 'destination-1', network: config.networkName }]],
+    [`/applications?tag=${config.resourceTag}`, []]
+  ]);
+  const client = {
+    request: async (path, options = {}) => {
+      calls.push([path, options.method || 'GET', options.body]);
+      if (path === '/applications/public') return { uuid: 'app-1' };
+      if (path === '/applications/app-1/envs/bulk') return { uuid: 'app-1' };
+      return responses.get(path);
+    }
+  };
+
+  await reconcile(client, config);
+
+  const creation = calls.find(([path]) => path === '/applications/public');
+  assert.equal(creation[2].destination_uuid, 'destination-1');
+  assert.equal(
+    calls.some(([path]) => path === '/applications/app-1'),
+    false
+  );
 });
 
 test('deployment waits for its Coolify operation to finish', async () => {
