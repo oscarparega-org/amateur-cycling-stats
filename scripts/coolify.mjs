@@ -119,7 +119,6 @@ export async function reconcile(client, config) {
   const applicationSettings = {
     git_commit_sha: config.sha,
     is_auto_deploy_enabled: false,
-    destination_uuid: destination.uuid,
     connect_to_docker_network: true,
     docker_compose_domains: [
       { name: 'frontend', domain: `${config.frontendUrl}:3000` },
