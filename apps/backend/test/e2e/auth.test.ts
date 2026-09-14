@@ -439,7 +439,7 @@ describe('Hono authentication', () => {
     const browser = client();
     const magicLink = await post(browser, '/api/auth/sign-in/magic-link', {
       email,
-      callbackURL: `${baseUrl}/aceptar-invitacion`
+      callbackURL: `${baseUrl}/es/accept-invitation`
     });
     expect(magicLink.status).toBe(200);
     const verify = await browser(emailUrl(latestEmail(/Sign in/, email)), { redirect: 'manual' });

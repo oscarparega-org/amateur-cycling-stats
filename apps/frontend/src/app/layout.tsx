@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { SiteHeader } from '@/components/site-header';
-import { getServerSession } from '@/lib/backend';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -9,14 +7,10 @@ export const metadata: Metadata = {
   description: 'Amateur cycling events, races, and results'
 };
 
-export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
-  const session = await getServerSession();
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="es">
-      <body>
-        <SiteHeader initialSession={session} />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import type { Organization, OrganizationState } from '@acs/shared';
 import { backendFetch } from './backend';
 import { parseOrganizationInput } from './organization-input';
+import type { Locale } from './i18n';
+import { localePath, translate } from './i18n';
 
 export type OrganizationActionState = {
   error?: string;
@@ -21,11 +23,12 @@ async function responseError(response: Response, fallback: string): Promise<stri
 }
 
 export async function createOrganizationAction(
+  locale: Locale,
   _previousState: OrganizationActionState,
   formData: FormData
 ): Promise<OrganizationActionState> {
   const parsed = parseOrganizationInput(formData);
-  if (!parsed.success) return { error: parsed.error, values: parsed.values };
+  if (!parsed.success) return { error: translate(locale, parsed.error), values: parsed.values };
 
   const response = await backendFetch('/api/organizations', {
     method: 'POST',
@@ -34,23 +37,24 @@ export async function createOrganizationAction(
   });
   if (!response.ok) {
     return {
-      error: await responseError(response, 'No se pudo crear la organización.'),
+      error: await responseError(response, translate(locale, 'No se pudo crear la organización.')),
       values: { name: parsed.data.name, description: parsed.data.description ?? '' }
     };
   }
 
   const organization = (await response.json()) as Organization;
-  revalidatePath('/admin/organizaciones');
-  redirect(`/admin/organizaciones/${organization.id}?resultado=creada`);
+  revalidatePath(localePath(locale, '/admin/organizations'));
+  redirect(`${localePath(locale, `/admin/organizations/${organization.id}`)}?result=created`);
 }
 
 export async function updateOrganizationAction(
+  locale: Locale,
   organizationId: string,
   _previousState: OrganizationActionState,
   formData: FormData
 ): Promise<OrganizationActionState> {
   const parsed = parseOrganizationInput(formData);
-  if (!parsed.success) return { error: parsed.error, values: parsed.values };
+  if (!parsed.success) return { error: translate(locale, parsed.error), values: parsed.values };
 
   const response = await backendFetch(`/api/organizations/${organizationId}`, {
     method: 'PATCH',
@@ -59,21 +63,22 @@ export async function updateOrganizationAction(
   });
   if (!response.ok) {
     return {
-      error: await responseError(response, 'No se pudieron guardar los cambios.'),
+      error: await responseError(response, translate(locale, 'No se pudieron guardar los cambios.')),
       values: { name: parsed.data.name, description: parsed.data.description ?? '' }
     };
   }
 
-  revalidatePath('/admin/organizaciones');
-  revalidatePath(`/admin/organizaciones/${organizationId}`);
-  redirect(`/admin/organizaciones/${organizationId}?resultado=actualizada`);
+  revalidatePath(localePath(locale, '/admin/organizations'));
+  revalidatePath(localePath(locale, `/admin/organizations/${organizationId}`));
+  redirect(`${localePath(locale, `/admin/organizations/${organizationId}`)}?result=updated`);
 }
 
 export async function setOrganizationStateAction(formData: FormData): Promise<void> {
+  const locale = formData.get('locale') === 'en' ? 'en' : 'es';
   const organizationId = String(formData.get('organizationId') ?? '');
   const state = String(formData.get('state') ?? '') as OrganizationState;
   if (!organizationId || !['ACTIVE', 'INACTIVE'].includes(state)) {
-    redirect('/admin/organizaciones?resultado=estado-invalido');
+    redirect(`${localePath(locale, '/admin/organizations')}?result=invalid-state`);
   }
 
   const response = await backendFetch(`/api/organizations/${organizationId}`, {
@@ -81,9 +86,11 @@ export async function setOrganizationStateAction(formData: FormData): Promise<vo
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ state })
   });
-  if (!response.ok) redirect(`/admin/organizaciones/${organizationId}?resultado=error-estado`);
+  if (!response.ok) redirect(`${localePath(locale, `/admin/organizations/${organizationId}`)}?result=state-error`);
 
-  revalidatePath('/admin/organizaciones');
-  revalidatePath(`/admin/organizaciones/${organizationId}`);
-  redirect(`/admin/organizaciones/${organizationId}?resultado=${state === 'ACTIVE' ? 'activada' : 'desactivada'}`);
+  revalidatePath(localePath(locale, '/admin/organizations'));
+  revalidatePath(localePath(locale, `/admin/organizations/${organizationId}`));
+  redirect(
+    `${localePath(locale, `/admin/organizations/${organizationId}`)}?result=${state === 'ACTIVE' ? 'activated' : 'deactivated'}`
+  );
 }

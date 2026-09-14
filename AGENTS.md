@@ -12,10 +12,10 @@ Treat `archive/` as reference-only and do not edit it unless the task explicitly
 
 ## Product and Feature State
 
-- The active product UI is Spanish-language. Preserve the established Spanish copy and `es-MX` date formatting unless
-  a task explicitly introduces localization or another locale.
-- `/` lists upcoming public events and `/eventos/[id]` shows a public event. Public discovery must never expose hidden
-  events or races.
+- The active product UI supports English and Spanish under `/en` and `/es`. Keep URL slugs in English, localize visible
+  content, use `en-US` formatting for English, and preserve `es-MX` formatting for Spanish.
+- `/[locale]` lists upcoming public events and `/[locale]/events/[id]` shows a public event. Public discovery must never
+  expose hidden events or races.
 - `/admin` is administrator-only. Its implemented scope is organization list/create/view/edit and active/inactive
   lifecycle management; permanent organization deletion exists only in the API.
 - `/organizer` is organizer-only and selects the first organization available to the signed-in organizer. Organization

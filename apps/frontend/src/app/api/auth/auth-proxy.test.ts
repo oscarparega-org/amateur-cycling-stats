@@ -14,7 +14,7 @@ describe('authentication BFF proxy', () => {
     process.env.API_URL = 'http://backend.internal:3000/';
     const upstream = new Response(null, {
       status: 302,
-      headers: { location: 'http://localhost:5173/correo-verificado', 'set-cookie': 'session=abc; HttpOnly; Path=/' }
+      headers: { location: 'http://localhost:5173/es/email-verified', 'set-cookie': 'session=abc; HttpOnly; Path=/' }
     });
     const fetchMock = vi.fn().mockResolvedValue(upstream);
     vi.stubGlobal('fetch', fetchMock);

@@ -3,7 +3,7 @@ import { safeRedirectPath } from './safe-redirect';
 
 describe('safeRedirectPath', () => {
   it('keeps local paths, queries, and fragments', () => {
-    expect(safeRedirectPath('/eventos?year=2026#resultados')).toBe('/eventos?year=2026#resultados');
+    expect(safeRedirectPath('/es/events?year=2026#results')).toBe('/es/events?year=2026#results');
   });
 
   it.each(['https://evil.example', '//evil.example/path', 'javascript:alert(1)', ''])(

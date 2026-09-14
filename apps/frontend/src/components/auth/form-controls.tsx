@@ -2,6 +2,7 @@
 
 import type { InputHTMLAttributes, ReactNode } from 'react';
 import { useState } from 'react';
+import { useLocale } from '@/components/locale-provider';
 
 export function FormField({
   label,
@@ -33,6 +34,7 @@ export function PasswordField(
   props: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & { label: string; error?: string }
 ) {
   const [visible, setVisible] = useState(false);
+  const { t } = useLocale();
   return (
     <div className="relative">
       <FormField {...props} type={visible ? 'text' : 'password'} />
@@ -40,9 +42,9 @@ export function PasswordField(
         className="absolute right-3 top-[2.35rem] rounded px-1.5 py-1 text-sm font-semibold text-slate-600 hover:text-blue-700"
         onClick={() => setVisible((value) => !value)}
         type="button"
-        aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+        aria-label={visible ? t('Ocultar contraseña') : t('Mostrar contraseña')}
       >
-        {visible ? 'Ocultar' : 'Mostrar'}
+        {visible ? t('Ocultar') : t('Mostrar')}
       </button>
     </div>
   );
@@ -92,9 +94,11 @@ export function StatusMessage({
 }
 
 export function Divider() {
+  const { t } = useLocale();
   return (
     <div className="my-6 flex items-center gap-4 text-sm text-slate-500" aria-hidden="true">
-      <span className="h-px flex-1 bg-slate-200" />o continúa con
+      <span className="h-px flex-1 bg-slate-200" />
+      {t('o continúa con')}
       <span className="h-px flex-1 bg-slate-200" />
     </div>
   );

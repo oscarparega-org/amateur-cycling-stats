@@ -3,15 +3,17 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { authClient } from '@/lib/auth-client';
+import { useLocale } from '@/components/locale-provider';
 
 export function ProtectedSignOut({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
+  const { t, path } = useLocale();
   const [pending, setPending] = useState(false);
 
   async function signOut() {
     setPending(true);
     await authClient.signOut();
-    router.push('/');
+    router.push(path());
     router.refresh();
   }
 
@@ -26,7 +28,7 @@ export function ProtectedSignOut({ compact = false }: { compact?: boolean }) {
       onClick={signOut}
       type="button"
     >
-      {pending ? 'Cerrando…' : compact ? 'Salir' : 'Cerrar sesión'}
+      {pending ? t('Cerrando…') : compact ? t('Salir') : t('Cerrar sesión')}
     </button>
   );
 }

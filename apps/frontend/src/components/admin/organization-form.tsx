@@ -5,11 +5,15 @@ import { useActionState } from 'react';
 import type { Organization } from '@acs/shared';
 import type { OrganizationActionState } from '@/lib/organization-actions';
 import { createOrganizationAction, updateOrganizationAction } from '@/lib/organization-actions';
+import { useLocale } from '@/components/locale-provider';
 
 const initialState: OrganizationActionState = {};
 
 export function OrganizationForm({ organization }: { organization?: Organization }) {
-  const action = organization ? updateOrganizationAction.bind(null, organization.id) : createOrganizationAction;
+  const { locale, t, path } = useLocale();
+  const action = organization
+    ? updateOrganizationAction.bind(null, locale, organization.id)
+    : createOrganizationAction.bind(null, locale);
   const [state, formAction, pending] = useActionState(action, initialState);
   const name = state.values?.name ?? organization?.name ?? '';
   const description = state.values?.description ?? organization?.description ?? '';
@@ -24,48 +28,51 @@ export function OrganizationForm({ organization }: { organization?: Organization
 
       <div>
         <label className="mb-2 block font-semibold text-[#102a43]" htmlFor="name">
-          Nombre de la organización
+          {t('Nombre de la organización')}
         </label>
         <input
-          className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-base text-[#102a43] shadow-sm focus:border-[var(--workspace-steel)] focus:outline-none focus:ring-3 focus:ring-slate-300/40"
+          className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-base text-[#102a43] shadow-sm placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-3 focus:ring-blue-600/15"
           defaultValue={name}
           id="name"
           maxLength={120}
           minLength={3}
           name="name"
+          placeholder={t('Ej. Liga Ciclista del Bajío')}
           required
         />
+        <p className="mt-2 text-sm text-slate-500">{t('Este nombre aparecerá en eventos y clasificaciones.')}</p>
       </div>
 
       <div>
         <div className="mb-2 flex items-baseline justify-between gap-4">
           <label className="font-semibold text-[#102a43]" htmlFor="description">
-            Descripción
+            {t('Descripción')}
           </label>
-          <span className="text-sm text-slate-500">Opcional</span>
+          <span className="text-sm text-slate-500">{t('Opcional')}</span>
         </div>
         <textarea
-          className="min-h-36 w-full resize-y rounded-md border border-slate-300 bg-white px-4 py-3 text-base leading-6 text-[#102a43] shadow-sm focus:border-[var(--workspace-steel)] focus:outline-none focus:ring-3 focus:ring-slate-300/40"
+          className="min-h-36 w-full resize-y rounded-md border border-slate-300 bg-white px-4 py-3 text-base leading-6 text-[#102a43] shadow-sm placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-3 focus:ring-blue-600/15"
           defaultValue={description}
           id="description"
           maxLength={1000}
           name="description"
+          placeholder={t('Región, disciplina o propósito de la organización.')}
         />
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-6">
         <button
-          className="rounded-md bg-[#102a43] px-5 py-3 font-bold text-white hover:bg-[#173f64] disabled:cursor-wait disabled:opacity-65"
+          className="rounded-md bg-[#f97316] px-5 py-3 font-bold text-white hover:bg-orange-600 disabled:cursor-wait disabled:opacity-65"
           disabled={pending}
           type="submit"
         >
-          {pending ? 'Guardando…' : organization ? 'Guardar cambios' : 'Crear organización'}
+          {pending ? t('Guardando…') : organization ? t('Guardar cambios') : t('Crear organización')}
         </button>
         <Link
           className="rounded-md border border-slate-300 bg-white px-5 py-3 font-bold text-[#102a43] hover:border-[#102a43]"
-          href={organization ? `/admin/organizaciones/${organization.id}` : '/admin/organizaciones'}
+          href={organization ? path(`/admin/organizations/${organization.id}`) : path('/admin/organizations')}
         >
-          Cancelar
+          {t('Cancelar')}
         </Link>
       </div>
     </form>

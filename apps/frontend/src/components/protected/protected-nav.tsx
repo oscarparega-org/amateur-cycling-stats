@@ -3,6 +3,7 @@
 import type { Route } from 'next';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLocale } from '@/components/locale-provider';
 
 export type ProtectedNavItem = {
   href: Route;
@@ -49,12 +50,13 @@ export function ProtectedNav({
   mobile?: boolean;
 }) {
   const pathname = usePathname();
+  const { t } = useLocale();
   const activeItem = items.find((item) => isActive(pathname, item));
   if (header) return <p className="font-semibold">{activeItem?.label ?? items[0]?.label}</p>;
 
   return (
     <nav
-      aria-label="Navegación del panel"
+      aria-label={t('Navegación del panel')}
       className={mobile ? 'flex gap-1 overflow-x-auto px-3' : 'space-y-1 px-4 py-6'}
     >
       {items.map((item) => {

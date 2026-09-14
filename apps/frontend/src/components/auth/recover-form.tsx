@@ -5,8 +5,10 @@ import { FormEvent, useState } from 'react';
 import { authClient } from '@/lib/auth-client';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
 import { FormField, StatusMessage, SubmitButton } from './form-controls';
+import { useLocale } from '@/components/locale-provider';
 
 export function RecoverForm() {
+  const { t, path } = useLocale();
   const [email, setEmail] = useState('');
   const [pending, setPending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -16,9 +18,9 @@ export function RecoverForm() {
     event.preventDefault();
     setPending(true);
     setError(null);
-    const result = await authClient.requestPasswordReset({ email, redirectTo: '/restablecer-contrasena' });
+    const result = await authClient.requestPasswordReset({ email, redirectTo: path('/reset-password') });
     setPending(false);
-    if (result.error) setError(getAuthErrorMessage(result.error));
+    if (result.error) setError(t(getAuthErrorMessage(result.error)));
     else setSent(true);
   }
 
@@ -26,11 +28,11 @@ export function RecoverForm() {
     return (
       <>
         <StatusMessage kind="success">
-          Si existe una cuenta con ese correo, recibirás un enlace para cambiar la contraseña.
+          {t('Si existe una cuenta con ese correo, recibirás un enlace para cambiar la contraseña.')}
         </StatusMessage>
         <p className="mt-7 text-center text-sm">
-          <Link className="font-bold text-blue-700 hover:text-blue-900" href="/iniciar-sesion">
-            Volver a iniciar sesión
+          <Link className="font-bold text-blue-700 hover:text-blue-900" href={path('/login')}>
+            {t('Volver a iniciar sesión')}
           </Link>
         </p>
       </>
@@ -42,19 +44,19 @@ export function RecoverForm() {
         <FormField
           autoComplete="email"
           id="recovery-email"
-          label="Correo electrónico"
+          label={t('Correo electrónico')}
           onChange={(event) => setEmail(event.target.value)}
           required
           type="email"
           value={email}
         />
-        <SubmitButton pending={pending} pendingText="Enviando…">
-          Enviar enlace
+        <SubmitButton pending={pending} pendingText={t('Enviando…')}>
+          {t('Enviar enlace')}
         </SubmitButton>
       </form>
       <p className="mt-8 text-center text-sm">
-        <Link className="font-bold text-blue-700 hover:text-blue-900" href="/iniciar-sesion">
-          Volver a iniciar sesión
+        <Link className="font-bold text-blue-700 hover:text-blue-900" href={path('/login')}>
+          {t('Volver a iniciar sesión')}
         </Link>
       </p>
     </>

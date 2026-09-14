@@ -1,4 +1,6 @@
 import type { Event, EventStatus } from '@acs/shared';
+import type { Locale } from './i18n';
+import { localeDate, translate } from './i18n';
 
 const statusLabels: Record<EventStatus, string> = {
   DRAFT: 'Borrador',
@@ -8,8 +10,8 @@ const statusLabels: Record<EventStatus, string> = {
   FINISHED: 'Finalizado'
 };
 
-export function formatEventStatus(status: EventStatus): string {
-  return statusLabels[status];
+export function formatEventStatus(status: EventStatus, locale: Locale = 'es'): string {
+  return translate(locale, statusLabels[status] ?? status);
 }
 
 export function eventStatusClasses(status: EventStatus): string {
@@ -22,16 +24,16 @@ export function formatEventLocation(event: Pick<Event, 'city' | 'state' | 'count
   return [event.city, event.state, event.country].filter(Boolean).join(', ');
 }
 
-export function eventDateParts(dateTime: string): { day: string; month: string } {
+export function eventDateParts(dateTime: string, locale: Locale = 'es'): { day: string; month: string } {
   const date = new Date(dateTime);
   return {
-    day: new Intl.DateTimeFormat('es-MX', { day: '2-digit' }).format(date),
-    month: new Intl.DateTimeFormat('es-MX', { month: 'short' }).format(date).replace('.', '').toUpperCase()
+    day: new Intl.DateTimeFormat(localeDate(locale), { day: '2-digit' }).format(date),
+    month: new Intl.DateTimeFormat(localeDate(locale), { month: 'short' }).format(date).replace('.', '').toUpperCase()
   };
 }
 
-export function formatEventDate(dateTime: string): string {
-  return new Intl.DateTimeFormat('es-MX', {
+export function formatEventDate(dateTime: string, locale: Locale = 'es'): string {
+  return new Intl.DateTimeFormat(localeDate(locale), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -39,8 +41,8 @@ export function formatEventDate(dateTime: string): string {
   }).format(new Date(dateTime));
 }
 
-export function formatEventTime(dateTime: string): string {
-  return new Intl.DateTimeFormat('es-MX', {
+export function formatEventTime(dateTime: string, locale: Locale = 'es'): string {
+  return new Intl.DateTimeFormat(localeDate(locale), {
     hour: '2-digit',
     minute: '2-digit'
   }).format(new Date(dateTime));
