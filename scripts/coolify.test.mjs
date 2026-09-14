@@ -35,6 +35,22 @@ test('rejects malformed or incomplete deployment configuration', () => {
   );
   assert.throws(() => buildDeploymentConfig({ ...environment, GITHUB_SHA: '' }), /GITHUB_SHA/);
   assert.throws(() => buildDeploymentConfig({ ...environment, COOLIFY_API_URL: 'http://coolify.test' }), /HTTPS/);
+  assert.throws(
+    () => buildDeploymentConfig({ ...environment, ADMIN_USER: 'admin@example.test' }),
+    /configured together/
+  );
+  assert.throws(() => buildDeploymentConfig({ ...environment, ADMIN_PASSWORD: 'password123' }), /configured together/);
+});
+
+test('reads optional administrator credentials from the repository configuration', () => {
+  const config = buildDeploymentConfig({
+    ...environment,
+    ADMIN_USER: 'admin@example.test',
+    ADMIN_PASSWORD: 'password123'
+  });
+
+  assert.equal(config.adminUser, 'admin@example.test');
+  assert.equal(config.adminPassword, 'password123');
 });
 
 test('Coolify errors do not leak response bodies or tokens', async () => {
@@ -101,6 +117,54 @@ test('reconciliation sends the destination only when creating an application', a
   assert.equal(
     calls.some(([path]) => path === '/applications/app-1'),
     false
+  );
+});
+
+test('reconciliation sends configured administrator credentials as runtime values', async () => {
+  const config = buildDeploymentConfig({
+    ...environment,
+    ADMIN_USER: 'admin@example.test',
+    ADMIN_PASSWORD: 'password123'
+  });
+  let environmentUpdate;
+  const responses = new Map([
+    ['/projects', [{ uuid: 'project-1', name: config.projectName }]],
+    ['/projects/project-1', { environments: [{ uuid: 'env-1', name: config.environmentName }] }],
+    ['/servers/server-1/destinations', [{ uuid: 'destination-1', network: config.networkName }]],
+    [
+      `/applications?tag=${config.resourceTag}`,
+      [{ uuid: 'app-1', git_repository: `https://github.com/${config.repository}` }]
+    ]
+  ]);
+  const client = {
+    request: async (path, options = {}) => {
+      if (path === '/applications/app-1/envs/bulk') environmentUpdate = options.body.data;
+      if (path === '/applications/app-1') return { uuid: 'app-1' };
+      return responses.get(path);
+    }
+  };
+
+  await reconcile(client, config);
+
+  assert.deepEqual(
+    environmentUpdate.filter(({ key }) => key.startsWith('ADMIN_')),
+    [
+      {
+        key: 'ADMIN_USER',
+        value: 'admin@example.test',
+        is_buildtime: false,
+        is_runtime: true,
+        is_preview: false
+      },
+      {
+        key: 'ADMIN_PASSWORD',
+        value: 'password123',
+        is_buildtime: false,
+        is_runtime: true,
+        is_preview: false,
+        is_literal: true
+      }
+    ]
   );
 });
 

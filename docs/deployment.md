@@ -31,11 +31,13 @@ Repository variables specific to this project:
 
 - `DEV_URL` — public frontend URL shown by GitHub Deployments.
 - `EMAIL_FROM` — verified sender used by authentication email.
+- `ADMIN_USER` — optional email address for the initial administrator account.
 
 Repository secrets specific to this project:
 
 - `RESEND_API_KEY` — production email provider credential.
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` — production OAuth credentials.
+- `ADMIN_PASSWORD` — optional initial administrator password; configure it together with `ADMIN_USER`.
 
 Do not duplicate these values in the `development` environment unless an environment-specific override is
 intentional. GitHub Actions resolves the existing `vars.*` and `secrets.*` references from repository and organization
@@ -52,10 +54,12 @@ exact commit, domains, destination, environment variables, and disabled auto-dep
 Coolify generates `SERVICE_USER_POSTGRES`, `SERVICE_PASSWORD_64_POSTGRES`, and `SERVICE_BASE64_64_AUTH`. The deployment
 controller writes public URLs and provider configuration. Do not upload an environment file containing secrets.
 
-The Compose stack uses a one-shot `migrate` service that Coolify excludes from ongoing health evaluation. Backend
-startup is gated on successful migrations, so application replicas never race to change the schema. Required roles
-and global lookup rows are installed through immutable Prisma migrations; production does not run a separate seed
-command. Both application containers expose health checks and run as non-root users.
+The Compose stack uses a one-shot `migrate` service that Coolify excludes from ongoing health evaluation. It applies
+migrations and then runs the idempotent seed command. Backend startup is gated on that service, so application replicas
+never race to change the schema. Required roles and global lookup rows are installed through immutable Prisma
+migrations. When both `ADMIN_USER` and `ADMIN_PASSWORD` are configured, the seed creates that verified administrator;
+if its email already exists, the user and password are left unchanged. Both application containers expose health checks
+and run as non-root users.
 
 ## Production promotion
 
