@@ -11,7 +11,7 @@ function StateSubmitButton({ nextState, verb }: { nextState: Organization['state
   return (
     <button
       className={`rounded-md px-4 py-2.5 font-bold text-white disabled:cursor-wait disabled:opacity-65 ${
-        nextState === 'ACTIVE' ? 'bg-blue-700 hover:bg-blue-800' : 'bg-red-700 hover:bg-red-800'
+        nextState === 'ACTIVE' ? 'bg-[#102a43] hover:bg-[#173f64]' : 'bg-red-700 hover:bg-red-800'
       }`}
       disabled={pending}
       type="submit"

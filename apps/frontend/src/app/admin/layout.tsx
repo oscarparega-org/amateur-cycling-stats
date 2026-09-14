@@ -17,5 +17,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (!currentUser || currentUser.roleType !== RoleTypeEnum.ADMIN) redirect('/');
 
   const fullName = [currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ');
-  return <AdminShell userName={fullName || currentUser.email}>{children}</AdminShell>;
+  return (
+    <AdminShell userEmail={currentUser.email} userName={fullName || currentUser.email}>
+      {children}
+    </AdminShell>
+  );
 }

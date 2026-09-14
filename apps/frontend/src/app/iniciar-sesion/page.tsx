@@ -14,7 +14,7 @@ export default async function LoginPage({
   const destination = safeRedirectPath(query.next);
   if (await getServerSession()) redirect(destination as Route);
   return (
-    <AuthShell title="Vuelve a la ruta" intro="Inicia sesión para consultar tus resultados y gestionar tus carreras.">
+    <AuthShell title="Iniciar sesión">
       <LoginForm next={destination} resetComplete={query.reset === 'completo'} />
     </AuthShell>
   );

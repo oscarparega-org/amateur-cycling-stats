@@ -9,14 +9,7 @@ export default async function EmailVerifiedPage({ searchParams }: { searchParams
   const message = getAuthQueryErrorMessage(error);
   const session = await getServerSession();
   return (
-    <AuthShell
-      title={message ? 'El enlace no funcionó' : 'Correo confirmado'}
-      intro={
-        message
-          ? 'Puedes solicitar un enlace nuevo para completar la verificación.'
-          : 'Tu cuenta está lista. Ya puedes seguir tu próxima carrera.'
-      }
-    >
+    <AuthShell title={message ? 'El enlace no funcionó' : 'Correo confirmado'}>
       {message ? (
         <>
           <StatusMessage>{message}</StatusMessage>

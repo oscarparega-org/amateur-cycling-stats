@@ -34,10 +34,10 @@ describe('EventList', () => {
     expect(screen.getAllByText('Disponible')).toHaveLength(2);
   });
 
-  it('renders guidance when there are no upcoming events', () => {
+  it('renders a concise state when there are no upcoming events', () => {
     render(<EventList events={[]} />);
     expect(screen.getByText('No hay próximos eventos')).toBeInTheDocument();
-    expect(screen.getByText(/nueva carrera/)).toBeInTheDocument();
+    expect(screen.queryByText(/nueva carrera/)).not.toBeInTheDocument();
   });
 });
 

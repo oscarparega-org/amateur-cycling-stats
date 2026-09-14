@@ -14,7 +14,7 @@ export default async function EditOrganizationPage({ params }: { params: Promise
   return (
     <>
       <Link
-        className="text-sm font-bold text-blue-700 hover:text-blue-900"
+        className="text-sm font-bold text-[var(--workspace-steel)] hover:text-[#102a43]"
         href={`/admin/organizaciones/${organization.id}`}
       >
         Volver a {organization.name}
@@ -23,9 +23,6 @@ export default async function EditOrganizationPage({ params }: { params: Promise
         <h1 className="display-font text-5xl font-semibold leading-none tracking-tight text-[#102a43] sm:text-6xl">
           Editar organización
         </h1>
-        <p className="mt-3 max-w-xl leading-7 text-slate-600">
-          Actualiza la información visible para administradores y organizadores.
-        </p>
       </div>
       <div className="mt-8">
         <OrganizationForm organization={organization} />

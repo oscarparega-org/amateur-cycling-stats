@@ -17,10 +17,9 @@ export default async function OrganizationOverviewPage({ params }: { params: Pro
     <>
       <PageHeading
         title="Resumen de organización"
-        description="La información principal y el acceso rápido a la operación de tus eventos."
         action={
           <Link
-            className="rounded-md bg-[#2563eb] px-5 py-3 font-bold text-white hover:bg-blue-700"
+            className="rounded-md bg-[#102a43] px-5 py-3 font-bold text-white hover:bg-[#173f64]"
             href={`/organizer/${organizationId}/events/new` as Route}
           >
             Crear evento
@@ -32,9 +31,9 @@ export default async function OrganizationOverviewPage({ params }: { params: Pro
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h2 className="text-3xl font-semibold">{organization.name}</h2>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                {organization.description || 'Esta organización aún no tiene una descripción.'}
-              </p>
+              {organization.description ? (
+                <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">{organization.description}</p>
+              ) : null}
             </div>
             <span
               className={
@@ -60,10 +59,10 @@ export default async function OrganizationOverviewPage({ params }: { params: Pro
         <aside className="relative overflow-hidden bg-[#102a43] p-6 text-white sm:p-8">
           <div className="timing-grid absolute inset-0 opacity-30" aria-hidden="true" />
           <div className="relative">
-            <p className="text-blue-200">Eventos registrados</p>
+            <p className="text-slate-300">Eventos registrados</p>
             <p className="display-font mt-3 text-7xl font-semibold leading-none">{organization.eventCount ?? 0}</p>
             <Link
-              className="mt-8 inline-flex border-b border-[#f97316] pb-1 font-bold text-white"
+              className="mt-8 inline-flex border-b border-white/40 pb-1 font-bold text-white"
               href={`/organizer/${organizationId}/events` as Route}
             >
               Gestionar eventos

@@ -4,7 +4,10 @@ import { OrganizationForm } from '@/components/admin/organization-form';
 export default function NewOrganizationPage() {
   return (
     <>
-      <Link className="text-sm font-bold text-blue-700 hover:text-blue-900" href="/admin/organizaciones">
+      <Link
+        className="text-sm font-bold text-[var(--workspace-steel)] hover:text-[#102a43]"
+        href="/admin/organizaciones"
+      >
         Volver a organizaciones
       </Link>
       <div className="mt-6 border-b border-slate-300 pb-7">

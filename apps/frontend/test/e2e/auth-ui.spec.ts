@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('presents the complete sign-in entry point', async ({ page }) => {
   await page.goto('/iniciar-sesion');
-  await expect(page.getByRole('heading', { name: 'Vuelve a la ruta' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible();
   await expect(page.getByLabel('Correo electrónico')).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Contraseña', exact: true })).toHaveAttribute('type', 'password');
   await page.getByRole('button', { name: 'Mostrar contraseña' }).click();
@@ -16,7 +16,7 @@ test('shows password mismatch guidance during registration', async ({ page }) =>
   await page.getByLabel('Nombre').fill('Ana');
   await page.getByLabel('Apellido').fill('Rueda');
   await page.getByLabel('Correo electrónico').fill('ana@example.com');
-  await page.getByLabel('Contraseña', { exact: true }).fill('password123');
+  await page.getByLabel('Contraseña (8–128 caracteres)', { exact: true }).fill('password123');
   await page.getByLabel('Confirmar contraseña').fill('different123');
   await page.getByRole('button', { name: 'Crear cuenta' }).click();
   await expect(page.locator('[role="alert"]').filter({ hasText: 'Las contraseñas no coinciden.' })).toBeVisible();
@@ -32,6 +32,6 @@ test('keeps the auth form usable at the mobile viewport', async ({ page }, testI
   test.skip(!testInfo.project.name.startsWith('mobile'), 'Mobile-only layout assertion');
   await page.goto('/registro');
   await expect(page.locator('aside')).toBeHidden();
-  await expect(page.getByRole('heading', { name: 'Toma la salida' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Crear cuenta' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Crear cuenta' })).toBeVisible();
 });

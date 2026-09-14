@@ -68,7 +68,6 @@ export function RegisterForm() {
           id="email"
           label="Correo electrónico"
           onChange={(event) => update('email', event.target.value)}
-          placeholder="nombre@correo.com"
           required
           type="email"
           value={values.email}
@@ -76,7 +75,7 @@ export function RegisterForm() {
         <PasswordField
           autoComplete="new-password"
           id="password"
-          label="Contraseña"
+          label="Contraseña (8–128 caracteres)"
           maxLength={128}
           minLength={8}
           onChange={(event) => update('password', event.target.value)}
@@ -98,7 +97,6 @@ export function RegisterForm() {
           required
           value={values.confirmPassword}
         />
-        <p className="text-sm leading-6 text-slate-500">Usa entre 8 y 128 caracteres.</p>
         <SubmitButton pending={pending} pendingText="Creando cuenta…">
           Crear cuenta
         </SubmitButton>

@@ -37,10 +37,9 @@ export default async function EventsPage({
     <>
       <PageHeading
         title="Eventos"
-        description="Crea, publica y mantén al día el calendario de tu organización."
         action={
           <Link
-            className="rounded-md bg-[#2563eb] px-5 py-3 font-bold text-white hover:bg-blue-700"
+            className="rounded-md bg-[#102a43] px-5 py-3 font-bold text-white hover:bg-[#173f64]"
             href={`/organizer/${organizationId}/events/new` as Route}
           >
             Crear evento
@@ -74,7 +73,6 @@ export default async function EventsPage({
       {events.length === 0 ? (
         <div className="border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
           <h2 className="text-3xl font-semibold">No hay eventos en esta vista</h2>
-          <p className="mt-3 text-slate-600">Crea un evento nuevo o cambia el filtro.</p>
         </div>
       ) : (
         <div className="overflow-hidden border border-slate-200 bg-white">
@@ -88,16 +86,16 @@ export default async function EventsPage({
             const date = eventDate(event.dateTime);
             return (
               <Link
-                className="group grid gap-4 border-b border-slate-200 px-5 py-5 last:border-0 hover:bg-blue-50/50 md:grid-cols-[6rem_1fr_10rem_9rem] md:items-center"
+                className="group grid gap-4 border-b border-slate-200 px-5 py-5 last:border-0 hover:bg-[var(--workspace-fog)] md:grid-cols-[6rem_1fr_10rem_9rem] md:items-center"
                 href={`/organizer/${organizationId}/events/${event.id}` as Route}
                 key={event.id}
               >
-                <span className="flex w-fit items-baseline gap-2 border-l-4 border-[#f97316] pl-3 md:block">
+                <span className="flex w-fit items-baseline gap-2 border-l-4 border-[var(--workspace-steel)] pl-3 md:block">
                   <span className="display-font text-3xl font-semibold leading-none">{date.day}</span>
                   <span className="text-sm font-bold capitalize text-slate-500 md:block">{date.month}</span>
                 </span>
                 <span>
-                  <strong className="block text-lg group-hover:text-blue-700">{event.name}</strong>
+                  <strong className="block text-lg group-hover:text-[var(--workspace-steel)]">{event.name}</strong>
                   <span className="text-sm text-slate-500">
                     {event.city ? `${event.city}, ` : ''}
                     {event.state} · {date.detail}

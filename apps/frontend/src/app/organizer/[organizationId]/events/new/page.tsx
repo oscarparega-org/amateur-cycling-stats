@@ -9,15 +9,12 @@ export default async function NewEventPage({ params }: { params: Promise<{ organ
   return (
     <>
       <Link
-        className="mb-5 inline-block font-semibold text-blue-700 hover:text-blue-900"
+        className="mb-5 inline-block font-semibold text-[var(--workspace-steel)] hover:text-[#102a43]"
         href={`/organizer/${organizationId}/events` as Route}
       >
         ← Volver a eventos
       </Link>
-      <PageHeading
-        title="Crear evento"
-        description="Define la información base. Podrás publicarlo cuando esté listo."
-      />
+      <PageHeading title="Crear evento" />
       <section className="border border-slate-200 bg-white p-6 sm:p-8">
         <EventForm action={createEventAction.bind(null, organizationId)} />
       </section>

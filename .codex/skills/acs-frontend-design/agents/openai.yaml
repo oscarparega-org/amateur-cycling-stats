@@ -1,0 +1,4 @@
+interface:
+  display_name: "ACS Frontend Design"
+  short_description: "Apply the ACS interface system to routes and components"
+  default_prompt: "Use the ACS frontend design system for this component or page."
