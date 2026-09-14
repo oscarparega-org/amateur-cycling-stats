@@ -62,9 +62,9 @@ invitations.post('/', async (c) => {
     await auth.api.signInMagicLink({
       body: {
         email: body.email,
-        callbackURL: '/es/accept-invitation',
-        newUserCallbackURL: '/es/accept-invitation',
-        errorCallbackURL: '/es/authentication-error'
+        callbackURL: '/en/accept-invitation',
+        newUserCallbackURL: '/en/accept-invitation',
+        errorCallbackURL: '/en/authentication-error'
       },
       headers: c.req.raw.headers
     });

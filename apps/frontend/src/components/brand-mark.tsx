@@ -17,10 +17,10 @@ export function BrandMark({ inverse = false }: { inverse?: boolean }) {
       >
         21
       </span>
-      <span className={`display-font text-xl font-semibold leading-[0.9] ${inverse ? 'text-white' : 'text-[#102a43]'}`}>
-        Amateur Cycling
-        <br />
-        Stats
+      <span
+        className={`display-font whitespace-nowrap text-xl font-semibold leading-none ${inverse ? 'text-white' : 'text-[#102a43]'}`}
+      >
+        Amateur Cycling Stats
       </span>
     </Link>
   );

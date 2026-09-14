@@ -34,6 +34,9 @@ const english: Record<string, string> = {
   'Crear cuenta': 'Create account',
   'Cerrar sesión': 'Sign out',
   'Cerrando…': 'Signing out…',
+  'Abrir menú de': 'Open menu for',
+  'Cerrar menú de': 'Close menu for',
+  'Ir al panel': 'Go to panel',
   'Próximos eventos': 'Upcoming events',
   'Encuentra tu siguiente línea de salida. Carreras abiertas y fechas confirmadas, ordenadas por salida.':
     'Find your next starting line. Open races and confirmed dates, ordered by start date.',
