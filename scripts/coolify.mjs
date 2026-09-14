@@ -26,6 +26,11 @@ export function buildDeploymentConfig(source = process.env) {
   }
   const apiUrl = required('COOLIFY_API_URL').replace(/\/$/, '');
   if (!apiUrl.startsWith('https://')) throw new Error('COOLIFY_API_URL must use HTTPS');
+  const adminUser = source.ADMIN_USER?.trim() || undefined;
+  const adminPassword = source.ADMIN_PASSWORD || undefined;
+  if (Boolean(adminUser) !== Boolean(adminPassword)) {
+    throw new Error('ADMIN_USER and ADMIN_PASSWORD must be configured together');
+  }
   return {
     apiUrl,
     serverUuid: required('COOLIFY_SERVER_UUID'),
@@ -39,6 +44,8 @@ export function buildDeploymentConfig(source = process.env) {
     resendApiKey: required('RESEND_API_KEY'),
     googleClientId: required('GOOGLE_CLIENT_ID'),
     googleClientSecret: required('GOOGLE_CLIENT_SECRET'),
+    adminUser,
+    adminPassword,
     projectName: repo,
     projectDescription: `Managed deployment for GitHub repository ${repository} (${repositoryId})`,
     environmentName: 'development',
@@ -182,7 +189,26 @@ export async function reconcile(client, config) {
           is_runtime: true,
           is_preview: false,
           is_literal: true
-        }
+        },
+        ...(config.adminUser
+          ? [
+              {
+                key: 'ADMIN_USER',
+                value: config.adminUser,
+                is_buildtime: false,
+                is_runtime: true,
+                is_preview: false
+              },
+              {
+                key: 'ADMIN_PASSWORD',
+                value: config.adminPassword,
+                is_buildtime: false,
+                is_runtime: true,
+                is_preview: false,
+                is_literal: true
+              }
+            ]
+          : [])
       ]
     }
   });
