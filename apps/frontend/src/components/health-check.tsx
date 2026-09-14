@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Alert } from '@/components/alert';
 
 type HealthResponse = {
   status: string;
@@ -40,7 +41,11 @@ export function HealthCheck() {
       <p className="mt-2 text-lg font-semibold text-slate-900">
         {health ? `API ${health.status} · database ${health.database}` : 'Connection not checked'}
       </p>
-      {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
+      {error ? (
+        <Alert closeLabel="Dismiss alert" kind="error">
+          {error}
+        </Alert>
+      ) : null}
       <button
         className="mt-5 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-wait disabled:opacity-60"
         disabled={loading}

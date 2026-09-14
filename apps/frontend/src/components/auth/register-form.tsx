@@ -4,10 +4,11 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import { Alert } from '@/components/alert';
+import { useLocale } from '@/components/locale-provider';
 import { authClient } from '@/lib/auth-client';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
-import { FormField, PasswordField, StatusMessage, SubmitButton } from './form-controls';
-import { useLocale } from '@/components/locale-provider';
+import { FormField, PasswordField, SubmitButton } from './form-controls';
 
 export function RegisterForm() {
   const { t, path } = useLocale();
@@ -47,7 +48,11 @@ export function RegisterForm() {
   return (
     <>
       <form className="space-y-5" onSubmit={submit}>
-        {error ? <StatusMessage>{error}</StatusMessage> : null}
+        {error ? (
+          <Alert closeLabel={t('Cerrar alerta')} kind="error">
+            {error}
+          </Alert>
+        ) : null}
         <div className="grid gap-5 sm:grid-cols-2">
           <FormField
             autoComplete="given-name"

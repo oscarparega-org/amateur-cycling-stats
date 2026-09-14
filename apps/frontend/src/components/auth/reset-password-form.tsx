@@ -4,10 +4,11 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import { Alert } from '@/components/alert';
+import { useLocale } from '@/components/locale-provider';
 import { authClient } from '@/lib/auth-client';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
-import { PasswordField, StatusMessage, SubmitButton } from './form-controls';
-import { useLocale } from '@/components/locale-provider';
+import { PasswordField, SubmitButton } from './form-controls';
 
 export function ResetPasswordForm({ token, linkError }: { token?: string; linkError?: string | null }) {
   const { t, path } = useLocale();
@@ -20,7 +21,9 @@ export function ResetPasswordForm({ token, linkError }: { token?: string; linkEr
   if (!token)
     return (
       <>
-        <StatusMessage>{t(error ?? 'El enlace no incluye un token válido.')}</StatusMessage>
+        <Alert closeLabel={t('Cerrar alerta')} kind="error">
+          {t(error ?? 'El enlace no incluye un token válido.')}
+        </Alert>
         <Link
           className="mt-6 flex h-12 items-center justify-center rounded-md bg-[#102a43] px-5 font-bold text-white hover:bg-[#173f64]"
           href={path('/forgot-password')}
@@ -49,7 +52,11 @@ export function ResetPasswordForm({ token, linkError }: { token?: string; linkEr
 
   return (
     <form className="space-y-5" onSubmit={submit}>
-      {error ? <StatusMessage>{error}</StatusMessage> : null}
+      {error ? (
+        <Alert closeLabel={t('Cerrar alerta')} kind="error">
+          {error}
+        </Alert>
+      ) : null}
       <PasswordField
         autoComplete="new-password"
         id="new-password"

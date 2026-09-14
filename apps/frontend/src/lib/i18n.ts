@@ -90,6 +90,7 @@ const english: Record<string, string> = {
   'Aún no hay organizaciones': 'There are no organizations yet',
   'Crea la primera para empezar a asignar eventos.': 'Create the first one to start assigning events.',
   'Crear organización': 'Create organization',
+  'Cerrar alerta': 'Dismiss alert',
   'Organización creada. Puedes activarla cuando esté lista.':
     'Organization created. You can activate it when it is ready.',
   'Cambios guardados.': 'Changes saved.',

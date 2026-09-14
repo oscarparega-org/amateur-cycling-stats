@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { Alert } from '@/components/alert';
+import { useLocale } from '@/components/locale-provider';
 import { authClient } from '@/lib/auth-client';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
-import { FormField, StatusMessage, SubmitButton } from './form-controls';
-import { useLocale } from '@/components/locale-provider';
+import { FormField, SubmitButton } from './form-controls';
 
 function maskEmail(email: string): string {
   const [name, domain] = email.split('@');
@@ -44,8 +45,16 @@ export function VerificationPending({ initialEmail = '' }: { initialEmail?: stri
         {t('El enlace vence en una hora.')}
       </div>
       <form className="space-y-5" onSubmit={resend}>
-        {message ? <StatusMessage kind="success">{message}</StatusMessage> : null}
-        {error ? <StatusMessage>{error}</StatusMessage> : null}
+        {message ? (
+          <Alert autoCloseMs={6000} closeLabel={t('Cerrar alerta')} kind="success">
+            {message}
+          </Alert>
+        ) : null}
+        {error ? (
+          <Alert closeLabel={t('Cerrar alerta')} kind="error">
+            {error}
+          </Alert>
+        ) : null}
         <FormField
           autoComplete="email"
           id="verification-email"

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { notFound } from 'next/navigation';
 import { deleteEventAction, publishEventAction, toggleEventVisibilityAction } from '@/app/organizer/actions';
+import { Alert } from '@/components/alert';
 import { ConfirmSubmit } from '@/components/organizer/confirm-submit';
 import { PageHeading } from '@/components/organizer/page-heading';
 import { StatusBadge } from '@/components/organizer/status-badge';
@@ -45,15 +46,14 @@ export default async function EventDetailPage({
         ← {t('Volver a eventos')}
       </Link>
       <PageHeading title={event.name} />
-      {query.notice && notices[query.notice] ? (
-        <p className="mb-5 border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3 font-semibold text-emerald-900">
-          {t(notices[query.notice] ?? '')}
-        </p>
-      ) : null}
       {query.error ? (
-        <p className="mb-5 border-l-4 border-red-500 bg-red-50 px-4 py-3 font-semibold text-red-900">
+        <Alert closeLabel={t('Cerrar alerta')} kind="error">
           {t('No se pudo completar la operación. Vuelve a intentarlo.')}
-        </p>
+        </Alert>
+      ) : query.notice && notices[query.notice] ? (
+        <Alert autoCloseMs={6000} closeLabel={t('Cerrar alerta')} kind="success">
+          {t(notices[query.notice] ?? '')}
+        </Alert>
       ) : null}
       <div className="mb-6 flex flex-wrap gap-3">
         {event.eventStatus === 'DRAFT' ? (

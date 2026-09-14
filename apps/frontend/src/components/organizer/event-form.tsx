@@ -4,6 +4,7 @@ import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import type { Event } from '@acs/shared';
 import type { EventFormState } from '@/app/organizer/actions';
+import { Alert } from '@/components/alert';
 import { translate, type Locale } from '@/lib/i18n';
 
 type EventAction = (state: EventFormState, formData: FormData) => Promise<EventFormState>;
@@ -38,9 +39,9 @@ export function EventForm({ action, event, locale = 'es' }: { action: EventActio
   return (
     <form action={formAction} className="max-w-3xl space-y-7">
       {state.error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+        <Alert closeLabel={t('Cerrar alerta')} kind="error">
           {state.error}
-        </p>
+        </Alert>
       ) : null}
       <label className="block font-semibold">
         {t('Nombre del evento')}

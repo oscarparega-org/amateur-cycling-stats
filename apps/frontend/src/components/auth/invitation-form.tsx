@@ -3,9 +3,10 @@
 import type { OrganizationInvitation } from '@acs/shared';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
-import { getAuthErrorMessage } from '@/lib/auth-errors';
-import { FormField, PasswordField, StatusMessage, SubmitButton } from './form-controls';
+import { Alert } from '@/components/alert';
 import { useLocale } from '@/components/locale-provider';
+import { getAuthErrorMessage } from '@/lib/auth-errors';
+import { FormField, PasswordField, SubmitButton } from './form-controls';
 
 export function InvitationForm({
   invitation,
@@ -67,10 +68,15 @@ export function InvitationForm({
 
   return (
     <form className="space-y-5" onSubmit={submit}>
-      <StatusMessage kind="info">
-        {t('La invitación corresponde a')} <strong>{invitation.email}</strong>.
-      </StatusMessage>
-      {error ? <StatusMessage>{error}</StatusMessage> : null}
+      {error ? (
+        <Alert closeLabel={t('Cerrar alerta')} key="invitation-error" kind="error">
+          {error}
+        </Alert>
+      ) : (
+        <Alert closeLabel={t('Cerrar alerta')} key="invitation-context" kind="info">
+          {t('La invitación corresponde a')} <strong>{invitation.email}</strong>.
+        </Alert>
+      )}
       <div className="grid gap-5 sm:grid-cols-2">
         <FormField
           autoComplete="given-name"

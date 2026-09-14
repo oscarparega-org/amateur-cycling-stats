@@ -1,8 +1,8 @@
 import type { OrganizationInvitation } from '@acs/shared';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { Alert } from '@/components/alert';
 import { AuthShell } from '@/components/auth/auth-shell';
-import { StatusMessage } from '@/components/auth/form-controls';
 import { InvitationForm } from '@/components/auth/invitation-form';
 import { backendFetch, getServerSession } from '@/lib/backend';
 import { localePath, resolveLocale, translate } from '@/lib/i18n';
@@ -31,10 +31,10 @@ export default async function AcceptInvitationPage({ params }: { params: Promise
         />
       ) : (
         <>
-          <StatusMessage>
+          <Alert closeLabel={t('Cerrar alerta')} kind="error">
             {t('No encontramos una invitación pendiente para')} {session.user.email}.{' '}
             {t('Puede haber expirado o ya fue aceptada.')}
-          </StatusMessage>
+          </Alert>
           <Link
             className="mt-6 flex h-12 items-center justify-center rounded-md bg-[#102a43] px-5 font-bold text-white hover:bg-[#173f64]"
             href={localePath(locale)}

@@ -8,8 +8,9 @@ import { authClient } from '@/lib/auth-client';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
 import type { AuthApiError } from '@/lib/auth-types';
 import { getPostLoginPath } from '@/lib/role-navigation';
-import { Divider, FormField, PasswordField, StatusMessage, SubmitButton } from './form-controls';
+import { Alert } from '@/components/alert';
 import { useLocale } from '@/components/locale-provider';
+import { Divider, FormField, PasswordField, SubmitButton } from './form-controls';
 
 export function LoginForm({ next = '/', resetComplete = false }: { next?: string; resetComplete?: boolean }) {
   const { locale, t, path } = useLocale();
@@ -64,11 +65,8 @@ export function LoginForm({ next = '/', resetComplete = false }: { next?: string
   return (
     <>
       <form className="space-y-5" onSubmit={submit}>
-        {resetComplete ? (
-          <StatusMessage kind="success">{t('Tu contraseña cambió. Ya puedes iniciar sesión.')}</StatusMessage>
-        ) : null}
         {error ? (
-          <StatusMessage>
+          <Alert closeLabel={t('Cerrar alerta')} key="sign-in-error" kind="error">
             {t(getAuthErrorMessage(error))}
             {isUnverified ? (
               <button
@@ -80,9 +78,16 @@ export function LoginForm({ next = '/', resetComplete = false }: { next?: string
                 {t('Reenviar correo')}
               </button>
             ) : null}
-          </StatusMessage>
+          </Alert>
+        ) : resent ? (
+          <Alert autoCloseMs={6000} closeLabel={t('Cerrar alerta')} key="verification-resent" kind="success">
+            {t('Enviamos un nuevo correo de verificación.')}
+          </Alert>
+        ) : resetComplete ? (
+          <Alert autoCloseMs={6000} closeLabel={t('Cerrar alerta')} key="password-reset" kind="success">
+            {t('Tu contraseña cambió. Ya puedes iniciar sesión.')}
+          </Alert>
         ) : null}
-        {resent ? <StatusMessage kind="success">{t('Enviamos un nuevo correo de verificación.')}</StatusMessage> : null}
         <FormField
           autoComplete="email"
           id="email"

@@ -70,29 +70,6 @@ export function SubmitButton({
   );
 }
 
-export function StatusMessage({
-  kind = 'error',
-  children
-}: {
-  kind?: 'error' | 'success' | 'info';
-  children: ReactNode;
-}) {
-  const styles =
-    kind === 'success'
-      ? 'border-green-200 bg-green-50 text-green-800'
-      : kind === 'info'
-        ? 'border-blue-200 bg-blue-50 text-blue-900'
-        : 'border-red-200 bg-red-50 text-red-800';
-  return (
-    <div
-      className={`rounded-md border px-4 py-3 text-sm leading-6 ${styles}`}
-      role={kind === 'error' ? 'alert' : 'status'}
-    >
-      {children}
-    </div>
-  );
-}
-
 export function Divider() {
   const { t } = useLocale();
   return (
