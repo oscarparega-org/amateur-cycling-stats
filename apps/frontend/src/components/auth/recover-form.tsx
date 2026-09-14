@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { FormEvent, useState } from 'react';
+import { Alert } from '@/components/alert';
+import { useLocale } from '@/components/locale-provider';
 import { authClient } from '@/lib/auth-client';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
-import { FormField, StatusMessage, SubmitButton } from './form-controls';
-import { useLocale } from '@/components/locale-provider';
+import { FormField, SubmitButton } from './form-controls';
 
 export function RecoverForm() {
   const { t, path } = useLocale();
@@ -27,9 +28,9 @@ export function RecoverForm() {
   if (sent)
     return (
       <>
-        <StatusMessage kind="success">
+        <Alert closeLabel={t('Cerrar alerta')} kind="success">
           {t('Si existe una cuenta con ese correo, recibirás un enlace para cambiar la contraseña.')}
-        </StatusMessage>
+        </Alert>
         <p className="mt-7 text-center text-sm">
           <Link className="font-bold text-blue-700 hover:text-blue-900" href={path('/login')}>
             {t('Volver a iniciar sesión')}
@@ -40,7 +41,11 @@ export function RecoverForm() {
   return (
     <>
       <form className="space-y-5" onSubmit={submit}>
-        {error ? <StatusMessage>{error}</StatusMessage> : null}
+        {error ? (
+          <Alert closeLabel={t('Cerrar alerta')} kind="error">
+            {error}
+          </Alert>
+        ) : null}
         <FormField
           autoComplete="email"
           id="recovery-email"

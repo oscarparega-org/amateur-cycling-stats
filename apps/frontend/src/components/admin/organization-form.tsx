@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useActionState } from 'react';
 import type { Organization } from '@acs/shared';
+import { Alert } from '@/components/alert';
+import { useLocale } from '@/components/locale-provider';
 import type { OrganizationActionState } from '@/lib/organization-actions';
 import { createOrganizationAction, updateOrganizationAction } from '@/lib/organization-actions';
-import { useLocale } from '@/components/locale-provider';
 
 const initialState: OrganizationActionState = {};
 
@@ -21,9 +22,9 @@ export function OrganizationForm({ organization }: { organization?: Organization
   return (
     <form action={formAction} className="max-w-2xl space-y-7">
       {state.error ? (
-        <div className="border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm font-semibold text-red-900" role="alert">
+        <Alert closeLabel={t('Cerrar alerta')} kind="error">
           {state.error}
-        </div>
+        </Alert>
       ) : null}
 
       <div>

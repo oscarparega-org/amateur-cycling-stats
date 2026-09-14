@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Route } from 'next';
+import { Alert } from '@/components/alert';
 import { PageHeading } from '@/components/organizer/page-heading';
 import { StatusBadge } from '@/components/organizer/status-badge';
 import { getOrganizationEvents, type EventFilter } from '@/lib/organizer';
@@ -50,9 +51,9 @@ export default async function EventsPage({
         }
       />
       {query.notice && noticeText[query.notice] ? (
-        <p className="mb-5 border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3 font-semibold text-emerald-900">
+        <Alert autoCloseMs={6000} closeLabel={t('Cerrar alerta')} kind="success">
           {t(noticeText[query.notice] ?? '')}
-        </p>
+        </Alert>
       ) : null}
       <div className="mb-5 flex gap-2" aria-label={t('Filtrar eventos')}>
         {filters.map((item) => (
