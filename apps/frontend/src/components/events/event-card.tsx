@@ -32,7 +32,7 @@ export function EventCard({ event }: { event: EventWithOrganization }) {
           {event.organizationName ? (
             <p className="mt-2 font-semibold text-slate-700">{event.organizationName}</p>
           ) : null}
-          <p className="mt-1 text-slate-600">{location || 'Ubicación por confirmar'}</p>
+          {location ? <p className="mt-1 text-slate-600">{location}</p> : null}
           {event.description ? (
             <p className="mt-3 line-clamp-2 max-w-3xl leading-7 text-slate-600">{event.description}</p>
           ) : null}

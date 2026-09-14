@@ -25,7 +25,10 @@ export default async function OrganizationPage({
   return (
     <>
       <AdminStatusMessage result={query.resultado} />
-      <Link className="text-sm font-bold text-blue-700 hover:text-blue-900" href="/admin/organizaciones">
+      <Link
+        className="text-sm font-bold text-[var(--workspace-steel)] hover:text-[#102a43]"
+        href="/admin/organizaciones"
+      >
         Volver a organizaciones
       </Link>
 
@@ -57,11 +60,13 @@ export default async function OrganizationPage({
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(15rem,0.6fr)]">
-        <section className="border-t-4 border-[#2563eb] bg-white p-6 shadow-sm sm:p-8">
+        <section className="border-t-4 border-[var(--workspace-steel)] bg-white p-6 shadow-sm sm:p-8">
           <h2 className="display-font text-3xl font-semibold text-[#102a43]">Información</h2>
-          <p className="mt-5 max-w-2xl whitespace-pre-wrap text-base leading-7 text-slate-700">
-            {organization.description || 'Esta organización todavía no tiene descripción.'}
-          </p>
+          {organization.description ? (
+            <p className="mt-5 max-w-2xl whitespace-pre-wrap text-base leading-7 text-slate-700">
+              {organization.description}
+            </p>
+          ) : null}
         </section>
 
         <dl className="divide-y divide-slate-200 border-y border-slate-300">

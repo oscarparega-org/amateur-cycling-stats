@@ -50,7 +50,7 @@ export function ResetPasswordForm({ token, linkError }: { token?: string; linkEr
       <PasswordField
         autoComplete="new-password"
         id="new-password"
-        label="Nueva contraseña"
+        label="Nueva contraseña (8–128 caracteres)"
         maxLength={128}
         minLength={8}
         onChange={(event) => setPassword(event.target.value)}
@@ -68,7 +68,6 @@ export function ResetPasswordForm({ token, linkError }: { token?: string; linkEr
         required
         value={confirmation}
       />
-      <p className="text-sm leading-6 text-slate-500">Usa entre 8 y 128 caracteres.</p>
       <SubmitButton pending={pending} pendingText="Guardando…">
         Cambiar contraseña
       </SubmitButton>

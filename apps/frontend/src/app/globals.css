@@ -14,6 +14,9 @@
   --timing-line: #cbd5e1;
   --course-blue: #2563eb;
   --signal-orange: #f97316;
+  --workspace-canvas: #f3f5f6;
+  --workspace-steel: #5f7382;
+  --workspace-fog: #e4e9ec;
 }
 * {
   box-sizing: border-box;

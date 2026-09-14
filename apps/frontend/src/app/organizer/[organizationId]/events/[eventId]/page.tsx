@@ -36,12 +36,12 @@ export default async function EventDetailPage({
   return (
     <>
       <Link
-        className="mb-5 inline-block font-semibold text-blue-700 hover:text-blue-900"
+        className="mb-5 inline-block font-semibold text-[var(--workspace-steel)] hover:text-[#102a43]"
         href={`/organizer/${organizationId}/events` as Route}
       >
         ← Volver a eventos
       </Link>
-      <PageHeading title={event.name} description={formatDate(event.dateTime)} />
+      <PageHeading title={event.name} />
       {query.notice && notices[query.notice] ? (
         <p className="mb-5 border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3 font-semibold text-emerald-900">
           {notices[query.notice]}
@@ -56,7 +56,7 @@ export default async function EventDetailPage({
         {event.eventStatus === 'DRAFT' ? (
           <form action={publishEventAction.bind(null, organizationId, eventId)}>
             <ConfirmSubmit
-              className="rounded-md bg-[#f97316] px-4 py-2.5 font-bold text-white hover:bg-orange-600"
+              className="rounded-md bg-[#102a43] px-4 py-2.5 font-bold text-white hover:bg-[#173f64]"
               message="Al publicar, el evento será visible para el público. ¿Continuar?"
             >
               Publicar evento
@@ -73,7 +73,7 @@ export default async function EventDetailPage({
           </form>
         )}
         <Link
-          className="rounded-md bg-[#2563eb] px-4 py-2.5 font-bold text-white hover:bg-blue-700"
+          className="rounded-md border border-slate-300 bg-white px-4 py-2.5 font-bold text-[#102a43] hover:border-[var(--workspace-steel)]"
           href={`${base}/edit` as Route}
         >
           Editar
@@ -103,9 +103,7 @@ export default async function EventDetailPage({
             </div>
             <div className="sm:col-span-2">
               <dt className="text-sm text-slate-500">Descripción</dt>
-              <dd className="mt-2 whitespace-pre-wrap leading-7 text-slate-700">
-                {event.description || 'Sin descripción.'}
-              </dd>
+              <dd className="mt-2 whitespace-pre-wrap leading-7 text-slate-700">{event.description || '—'}</dd>
             </div>
           </dl>
         </div>

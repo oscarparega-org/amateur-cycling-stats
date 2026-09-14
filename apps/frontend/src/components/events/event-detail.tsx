@@ -38,16 +38,16 @@ export function EventDetail({ event }: { event: EventWithOrganization }) {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-12 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[1fr_20rem] lg:gap-20">
-        <div>
-          <h2 className="display-font text-3xl font-semibold">Sobre el evento</h2>
-          {event.description ? (
+      <section
+        className={`mx-auto max-w-7xl gap-12 px-5 py-12 sm:px-8 sm:py-16 lg:gap-20 ${event.description ? 'grid lg:grid-cols-[1fr_20rem]' : 'flex justify-end'}`}
+      >
+        {event.description ? (
+          <div>
+            <h2 className="display-font text-3xl font-semibold">Sobre el evento</h2>
             <p className="mt-5 max-w-3xl whitespace-pre-line text-lg leading-8 text-slate-700">{event.description}</p>
-          ) : (
-            <p className="mt-5 text-lg text-slate-600">El organizador todavía no ha añadido una descripción.</p>
-          )}
-        </div>
-        <dl className="border-t-4 border-[#f97316] bg-white px-6 py-5 shadow-[0_10px_30px_rgba(15,42,67,0.08)]">
+          </div>
+        ) : null}
+        <dl className="w-full border-t-4 border-[#f97316] bg-white px-6 py-5 shadow-[0_10px_30px_rgba(15,42,67,0.08)] lg:max-w-80">
           <div className="border-b border-slate-200 pb-5">
             <dt className="font-semibold text-slate-600">Cuándo</dt>
             <dd className="mt-1 text-lg font-semibold text-[#102a43]">
@@ -57,7 +57,7 @@ export function EventDetail({ event }: { event: EventWithOrganization }) {
           </div>
           <div className="pt-5">
             <dt className="font-semibold text-slate-600">Dónde</dt>
-            <dd className="mt-1 text-lg font-semibold text-[#102a43]">{location || 'Ubicación por confirmar'}</dd>
+            <dd className="mt-1 text-lg font-semibold text-[#102a43]">{location || '—'}</dd>
           </div>
         </dl>
       </section>

@@ -17,10 +17,7 @@ export default async function AcceptInvitationPage() {
     /* Render the actionable unavailable state below. */
   }
   return (
-    <AuthShell
-      title="Únete al equipo"
-      intro="Completa tus datos para empezar a gestionar las carreras de tu organización."
-    >
+    <AuthShell title="Aceptar invitación">
       {invitation ? (
         <InvitationForm
           invitation={invitation}

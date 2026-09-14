@@ -44,7 +44,6 @@ export function RecoverForm() {
           id="recovery-email"
           label="Correo electrónico"
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="nombre@correo.com"
           required
           type="email"
           value={email}

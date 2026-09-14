@@ -21,16 +21,11 @@ export default async function OrganizationsPage({ searchParams }: { searchParams
     <>
       <AdminStatusMessage result={query.resultado} />
       <div className="flex flex-col gap-6 border-b border-slate-300 pb-7 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="display-font text-5xl font-semibold leading-none tracking-tight text-[#102a43] sm:text-6xl">
-            Organizaciones
-          </h1>
-          <p className="mt-3 max-w-xl text-base leading-7 text-slate-600">
-            Administra los equipos responsables de publicar eventos y resultados.
-          </p>
-        </div>
+        <h1 className="display-font text-5xl font-semibold leading-none tracking-tight text-[#102a43] sm:text-6xl">
+          Organizaciones
+        </h1>
         <Link
-          className="w-fit rounded-md bg-[#f97316] px-5 py-3 font-bold text-white hover:bg-orange-600"
+          className="w-fit rounded-md bg-[#102a43] px-5 py-3 font-bold text-white hover:bg-[#173f64]"
           href="/admin/organizaciones/nueva"
         >
           Nueva organización
@@ -61,17 +56,20 @@ export default async function OrganizationsPage({ searchParams }: { searchParams
             </thead>
             <tbody>
               {organizations.map((organization) => (
-                <tr className="border-b border-slate-200 last:border-0 hover:bg-blue-50/40" key={organization.id}>
+                <tr
+                  className="border-b border-slate-200 last:border-0 hover:bg-[var(--workspace-fog)]"
+                  key={organization.id}
+                >
                   <td className="px-5 py-4">
                     <Link
-                      className="font-bold text-[#102a43] underline decoration-slate-300 underline-offset-4 hover:decoration-blue-700"
+                      className="font-bold text-[#102a43] underline decoration-slate-300 underline-offset-4 hover:decoration-[var(--workspace-steel)]"
                       href={`/admin/organizaciones/${organization.id}`}
                     >
                       {organization.name}
                     </Link>
-                    <p className="mt-1 max-w-md truncate text-sm text-slate-500">
-                      {organization.description || 'Sin descripción'}
-                    </p>
+                    {organization.description ? (
+                      <p className="mt-1 max-w-md truncate text-sm text-slate-500">{organization.description}</p>
+                    ) : null}
                   </td>
                   <td className="px-5 py-4">
                     <span
@@ -98,11 +96,10 @@ export default async function OrganizationsPage({ searchParams }: { searchParams
           </table>
         </div>
       ) : (
-        <div className="mt-8 border-l-4 border-[#f97316] bg-white px-6 py-8 shadow-sm">
+        <div className="mt-8 border-l-4 border-[var(--workspace-steel)] bg-white px-6 py-8 shadow-sm">
           <h2 className="display-font text-3xl font-semibold text-[#102a43]">Aún no hay organizaciones</h2>
-          <p className="mt-2 text-slate-600">Crea la primera para empezar a asignar eventos.</p>
           <Link
-            className="mt-5 inline-block font-bold text-blue-700 underline underline-offset-4"
+            className="mt-5 inline-block font-bold text-[#102a43] underline decoration-slate-300 underline-offset-4"
             href="/admin/organizaciones/nueva"
           >
             Crear organización

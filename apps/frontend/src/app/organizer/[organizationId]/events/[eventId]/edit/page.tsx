@@ -17,12 +17,12 @@ export default async function EditEventPage({
   return (
     <>
       <Link
-        className="mb-5 inline-block font-semibold text-blue-700 hover:text-blue-900"
+        className="mb-5 inline-block font-semibold text-[var(--workspace-steel)] hover:text-[#102a43]"
         href={`/organizer/${organizationId}/events/${eventId}` as Route}
       >
         ← Volver al evento
       </Link>
-      <PageHeading title="Editar evento" description={event.name} />
+      <PageHeading title={`Editar ${event.name}`} />
       <section className="border border-slate-200 bg-white p-6 sm:p-8">
         <EventForm action={updateEventAction.bind(null, organizationId, eventId)} event={event} />
       </section>

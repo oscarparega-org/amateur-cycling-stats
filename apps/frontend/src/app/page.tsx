@@ -24,13 +24,10 @@ function EventsHomeContent({ content }: { content: ReactNode }) {
   return (
     <main className="min-h-[calc(100vh-5rem)]">
       <section className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:py-20">
-        <header className="mb-10 grid gap-5 border-l-4 border-[#f97316] pl-5 sm:mb-14 sm:pl-7 lg:grid-cols-[1fr_28rem] lg:items-end">
+        <header className="mb-10 border-l-4 border-[#f97316] pl-5 sm:mb-14 sm:pl-7">
           <h1 className="text-6xl font-semibold leading-[0.84] tracking-tight text-[#102a43] sm:text-7xl">
             Próximos eventos
           </h1>
-          <p className="max-w-xl text-lg leading-8 text-slate-600">
-            Encuentra tu siguiente línea de salida. Carreras abiertas y fechas confirmadas, ordenadas por salida.
-          </p>
         </header>
         {content}
       </section>

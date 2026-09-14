@@ -27,16 +27,14 @@ export function OrganizationForm({ organization }: { organization?: Organization
           Nombre de la organización
         </label>
         <input
-          className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-base text-[#102a43] shadow-sm placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-3 focus:ring-blue-600/15"
+          className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-base text-[#102a43] shadow-sm focus:border-[var(--workspace-steel)] focus:outline-none focus:ring-3 focus:ring-slate-300/40"
           defaultValue={name}
           id="name"
           maxLength={120}
           minLength={3}
           name="name"
-          placeholder="Ej. Liga Ciclista del Bajío"
           required
         />
-        <p className="mt-2 text-sm text-slate-500">Este nombre aparecerá en eventos y clasificaciones.</p>
       </div>
 
       <div>
@@ -47,18 +45,17 @@ export function OrganizationForm({ organization }: { organization?: Organization
           <span className="text-sm text-slate-500">Opcional</span>
         </div>
         <textarea
-          className="min-h-36 w-full resize-y rounded-md border border-slate-300 bg-white px-4 py-3 text-base leading-6 text-[#102a43] shadow-sm placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-3 focus:ring-blue-600/15"
+          className="min-h-36 w-full resize-y rounded-md border border-slate-300 bg-white px-4 py-3 text-base leading-6 text-[#102a43] shadow-sm focus:border-[var(--workspace-steel)] focus:outline-none focus:ring-3 focus:ring-slate-300/40"
           defaultValue={description}
           id="description"
           maxLength={1000}
           name="description"
-          placeholder="Región, disciplina o propósito de la organización."
         />
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-6">
         <button
-          className="rounded-md bg-[#f97316] px-5 py-3 font-bold text-white hover:bg-orange-600 disabled:cursor-wait disabled:opacity-65"
+          className="rounded-md bg-[#102a43] px-5 py-3 font-bold text-white hover:bg-[#173f64] disabled:cursor-wait disabled:opacity-65"
           disabled={pending}
           type="submit"
         >

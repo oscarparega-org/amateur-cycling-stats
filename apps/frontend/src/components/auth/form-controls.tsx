@@ -18,7 +18,7 @@ export function FormField({
         {...props}
         aria-describedby={describedBy}
         aria-invalid={Boolean(error)}
-        className="mt-2 block h-12 w-full rounded-md border border-slate-300 bg-white px-3.5 text-base font-normal text-slate-950 shadow-sm outline-none placeholder:text-slate-400 focus:border-blue-600 focus:ring-3 focus:ring-blue-100 aria-invalid:border-red-600 aria-invalid:ring-red-100"
+        className="mt-2 block h-12 w-full rounded-md border border-slate-300 bg-white px-3.5 text-base font-normal text-slate-950 shadow-sm outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-100 aria-invalid:border-red-600 aria-invalid:ring-red-100"
       />
       {error ? (
         <span className="mt-1.5 block text-sm text-red-700" id={`${props.id}-error`}>

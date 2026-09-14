@@ -11,7 +11,7 @@ function SaveButton({ editing }: { editing: boolean }) {
   const { pending } = useFormStatus();
   return (
     <button
-      className="rounded-md bg-[#2563eb] px-5 py-3 font-bold text-white hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
+      className="rounded-md bg-[#102a43] px-5 py-3 font-bold text-white hover:bg-[#173f64] disabled:cursor-wait disabled:opacity-60"
       disabled={pending}
       type="submit"
     >
@@ -30,7 +30,7 @@ function dateTimeValue(value?: string) {
 export function EventForm({ action, event }: { action: EventAction; event?: Event }) {
   const [state, formAction] = useActionState(action, {});
   const input =
-    'mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-[#102a43] shadow-sm placeholder:text-slate-400 focus:border-blue-600';
+    'mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-[#102a43] shadow-sm focus:border-[var(--workspace-steel)]';
 
   return (
     <form action={formAction} className="max-w-3xl space-y-7">
@@ -74,9 +74,8 @@ export function EventForm({ action, event }: { action: EventAction; event?: Even
           </label>
         </div>
       </fieldset>
-      <div className="flex items-center gap-4 border-t border-slate-200 pt-6">
+      <div className="border-t border-slate-200 pt-6">
         <SaveButton editing={Boolean(event)} />
-        <p className="text-sm text-slate-500">Los eventos nuevos permanecen ocultos hasta que los publiques.</p>
       </div>
     </form>
   );
