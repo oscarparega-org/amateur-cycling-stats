@@ -26,7 +26,9 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_64_POSTGRES}@postgres:5432/acs
-    command: ['npx', 'prisma', 'migrate', 'deploy']
+      ADMIN_USER: ${ADMIN_USER:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    command: ['sh', '-c', 'npx prisma migrate deploy && npm run db:seed']
 
   backend:
     build:

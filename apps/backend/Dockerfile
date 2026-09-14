@@ -29,6 +29,7 @@ ENV NODE_ENV=production
 # Copy built backend
 COPY --from=build /app/apps/backend/dist ./dist
 COPY --from=build /app/apps/backend/prisma ./prisma
+COPY --from=build /app/apps/backend/src/lib/seed-admin.ts ./src/lib/seed-admin.ts
 COPY --from=build /app/apps/backend/package.json ./package.json
 
 # Copy node_modules (hoisted by npm workspaces)

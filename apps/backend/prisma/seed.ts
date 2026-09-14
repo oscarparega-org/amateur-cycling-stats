@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { hashPassword } from 'better-auth/crypto';
 import { randomUUID } from 'node:crypto';
+import { seedAdminAccount } from '../src/lib/seed-admin.js';
 
 const prisma = new PrismaClient();
 
@@ -121,6 +122,15 @@ async function main() {
     });
   }
   console.log(`  ✓ ${roles.length} roles`);
+
+  const adminResult = await seedAdminAccount(prisma);
+  if (adminResult === 'created') {
+    console.log('  ✓ Production admin account');
+  } else if (adminResult === 'already-exists') {
+    console.log('  - Admin account already exists');
+  } else {
+    console.log('  - Skipped optional admin account');
+  }
 
   // Cyclist genders
   const genders = ['M', 'F'];
