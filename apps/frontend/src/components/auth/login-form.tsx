@@ -7,14 +7,14 @@ import { FormEvent, useState } from 'react';
 import { authClient } from '@/lib/auth-client';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
 import type { AuthApiError } from '@/lib/auth-types';
-import { safeRedirectPath } from '@/lib/safe-redirect';
+import { getPostLoginPath } from '@/lib/role-navigation';
 import { Divider, FormField, PasswordField, StatusMessage, SubmitButton } from './form-controls';
 import { useLocale } from '@/components/locale-provider';
 
 export function LoginForm({ next = '/', resetComplete = false }: { next?: string; resetComplete?: boolean }) {
-  const { t, path } = useLocale();
+  const { locale, t, path } = useLocale();
   const router = useRouter();
-  const destination = safeRedirectPath(next, path());
+  const destination = getPostLoginPath(next, locale);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [pending, setPending] = useState(false);

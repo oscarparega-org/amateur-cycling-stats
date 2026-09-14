@@ -4,6 +4,7 @@ import { StatusMessage } from '@/components/auth/form-controls';
 import { getAuthQueryErrorMessage } from '@/lib/auth-errors';
 import { getServerSession } from '@/lib/backend';
 import { localePath, resolveLocale, translate } from '@/lib/i18n';
+import { getPostLoginPath } from '@/lib/role-navigation';
 
 export default async function EmailVerifiedPage({
   params,
@@ -34,9 +35,9 @@ export default async function EmailVerifiedPage({
           <StatusMessage kind="success">{t('Tu correo quedó verificado correctamente.')}</StatusMessage>
           <Link
             className="mt-6 flex h-12 items-center justify-center rounded-md bg-[#102a43] px-5 font-bold text-white hover:bg-[#173f64]"
-            href={session ? localePath(locale) : localePath(locale, '/login')}
+            href={session ? getPostLoginPath(localePath(locale), locale) : localePath(locale, '/login')}
           >
-            {session ? t('Ir al inicio') : t('Iniciar sesión')}
+            {session ? t('Ir al panel') : t('Iniciar sesión')}
           </Link>
         </>
       )}
