@@ -48,12 +48,40 @@ function runCompose(args) {
   });
 }
 
+function runBake(args) {
+  return new Promise((resolvePromise, reject) => {
+    const child = spawn(
+      'docker',
+      ['buildx', 'bake', '-f', '-', '-f', ciComposePath, '--set', '*.output=type=cacheonly', ...args],
+      {
+        cwd: repositoryRoot,
+        env: environment,
+        stdio: ['pipe', 'inherit', 'inherit']
+      }
+    );
+
+    child.stdin.end(compose);
+    child.once('error', reject);
+    child.once('exit', (code, signal) => {
+      if (code === 0) {
+        resolvePromise();
+        return;
+      }
+      reject(new Error(`docker buildx bake exited with ${signal ? `signal ${signal}` : `code ${code}`}`));
+    });
+  });
+}
+
 try {
   await runCompose(['config', '--quiet']);
   if (!configOnly) {
     // migrate and backend intentionally share the same Dockerfile. Building the two
     // unique images together lets BuildKit reuse work and parallelize their stages.
-    await runCompose(['build', 'backend', 'frontend']);
+    if (process.env.GITHUB_ACTIONS === 'true') {
+      await runBake(['backend', 'frontend']);
+    } else {
+      await runCompose(['build', 'backend', 'frontend']);
+    }
   }
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
