@@ -37,24 +37,68 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Restore Turborepo cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+      - name: Restore Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npm ci
-      - run: npm run format:check
-      - run: npm audit --audit-level=high
-      - run: npm run check
-      - run: npm run lint
-      - run: npm test
-      - run: npm run test:e2e
-      - run: npm run build
-      - run: npx prisma migrate deploy --schema apps/backend/prisma/schema.prisma
+      - name: Static analysis and unit tests
+        shell: bash
+        run: |
+          set +e
+          npm run format:check & format_pid=$!
+          npm audit --audit-level=high & audit_pid=$!
+          npx turbo run check lint test & turbo_pid=$!
+          npx eslint scripts playwright.config.ts & scripts_lint_pid=$!
+          node --test scripts/*.test.mjs & scripts_test_pid=$!
+
+          status=0
+          for pid in "$format_pid" "$audit_pid" "$turbo_pid" "$scripts_lint_pid" "$scripts_test_pid"; do
+            wait "$pid" || status=1
+          done
+          exit "$status"
+      - name: Build, backend E2E, and browser setup
+        shell: bash
         env:
-          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e --workspace=acs-frontend
-      - run: npm run test:browser
+          PLAYWRIGHT_CACHE_HIT: ${{ steps.playwright-cache.outputs.cache-hit }}
+        run: |
+          set +e
+          npm run build & build_pid=$!
+          npm run test:e2e & backend_e2e_pid=$!
+          if [[ "$PLAYWRIGHT_CACHE_HIT" == "true" ]]; then
+            npx playwright install-deps chromium & playwright_pid=$!
+          else
+            npx playwright install --with-deps chromium & playwright_pid=$!
+          fi
+
+          status=0
+          for pid in "$build_pid" "$backend_e2e_pid" "$playwright_pid"; do
+            wait "$pid" || status=1
+          done
+          exit "$status"
+      - name: Browser tests
+        shell: bash
+        run: |
+          set +e
+          npm run test:e2e --workspace=acs-frontend & frontend_e2e_pid=$!
+          npm run test:browser & browser_smoke_pid=$!
+
+          status=0
+          wait "$frontend_e2e_pid" || status=1
+          wait "$browser_smoke_pid" || status=1
+          exit "$status"
 
   containers:
     name: Production images
-    needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -70,6 +114,10 @@ jobs:
       GOOGLE_CLIENT_SECRET: ci-only-placeholder
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Docker Buildx
+        run: |
+          docker buildx create --name ci-builder --driver docker-container --use
+          docker buildx inspect --bootstrap
       - name: Validate and build production images
         run: npm run build:containers
 

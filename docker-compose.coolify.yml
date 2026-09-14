@@ -1,3 +1,7 @@
+x-backend-build: &backend-build
+  context: .
+  dockerfile: apps/backend/Dockerfile
+
 services:
   postgres:
     image: postgres:16
@@ -16,9 +20,7 @@ services:
       start_period: 10s
 
   migrate:
-    build:
-      context: .
-      dockerfile: apps/backend/Dockerfile
+    build: *backend-build
     restart: 'no'
     exclude_from_hc: true
     depends_on:
@@ -31,9 +33,7 @@ services:
     command: ['sh', '-c', 'npx prisma migrate deploy && npm run db:seed']
 
   backend:
-    build:
-      context: .
-      dockerfile: apps/backend/Dockerfile
+    build: *backend-build
     restart: unless-stopped
     depends_on:
       migrate:
