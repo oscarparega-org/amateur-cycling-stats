@@ -9,10 +9,12 @@ import { getAuthErrorMessage } from '@/lib/auth-errors';
 import type { AuthApiError } from '@/lib/auth-types';
 import { safeRedirectPath } from '@/lib/safe-redirect';
 import { Divider, FormField, PasswordField, StatusMessage, SubmitButton } from './form-controls';
+import { useLocale } from '@/components/locale-provider';
 
 export function LoginForm({ next = '/', resetComplete = false }: { next?: string; resetComplete?: boolean }) {
+  const { t, path } = useLocale();
   const router = useRouter();
-  const destination = safeRedirectPath(next);
+  const destination = safeRedirectPath(next, path());
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [pending, setPending] = useState(false);
@@ -38,7 +40,7 @@ export function LoginForm({ next = '/', resetComplete = false }: { next?: string
   async function resendVerification() {
     setPending(true);
     setError(null);
-    const result = await authClient.sendVerificationEmail({ email, callbackURL: '/correo-verificado' });
+    const result = await authClient.sendVerificationEmail({ email, callbackURL: path('/email-verified') });
     setPending(false);
     if (result.error) setError(result.error);
     else setResent(true);
@@ -50,7 +52,7 @@ export function LoginForm({ next = '/', resetComplete = false }: { next?: string
     const result = await authClient.signIn.social({
       provider: 'google',
       callbackURL: destination,
-      errorCallbackURL: '/error-autenticacion'
+      errorCallbackURL: path('/authentication-error')
     });
     if (result.error) {
       setError(result.error);
@@ -63,11 +65,11 @@ export function LoginForm({ next = '/', resetComplete = false }: { next?: string
     <>
       <form className="space-y-5" onSubmit={submit}>
         {resetComplete ? (
-          <StatusMessage kind="success">Tu contraseña cambió. Ya puedes iniciar sesión.</StatusMessage>
+          <StatusMessage kind="success">{t('Tu contraseña cambió. Ya puedes iniciar sesión.')}</StatusMessage>
         ) : null}
         {error ? (
           <StatusMessage>
-            {getAuthErrorMessage(error)}
+            {t(getAuthErrorMessage(error))}
             {isUnverified ? (
               <button
                 className="ml-1 font-bold underline underline-offset-2"
@@ -75,16 +77,16 @@ export function LoginForm({ next = '/', resetComplete = false }: { next?: string
                 onClick={resendVerification}
                 type="button"
               >
-                Reenviar correo
+                {t('Reenviar correo')}
               </button>
             ) : null}
           </StatusMessage>
         ) : null}
-        {resent ? <StatusMessage kind="success">Enviamos un nuevo correo de verificación.</StatusMessage> : null}
+        {resent ? <StatusMessage kind="success">{t('Enviamos un nuevo correo de verificación.')}</StatusMessage> : null}
         <FormField
           autoComplete="email"
           id="email"
-          label="Correo electrónico"
+          label={t('Correo electrónico')}
           onChange={(event) => setEmail(event.target.value)}
           required
           type="email"
@@ -94,20 +96,20 @@ export function LoginForm({ next = '/', resetComplete = false }: { next?: string
           <PasswordField
             autoComplete="current-password"
             id="password"
-            label="Contraseña"
+            label={t('Contraseña')}
             minLength={8}
             onChange={(event) => setPassword(event.target.value)}
             required
             value={password}
           />
           <div className="mt-2 text-right">
-            <Link className="text-sm font-semibold text-blue-700 hover:text-blue-900" href="/recuperar-contrasena">
-              Olvidé mi contraseña
+            <Link className="text-sm font-semibold text-blue-700 hover:text-blue-900" href={path('/forgot-password')}>
+              {t('Olvidé mi contraseña')}
             </Link>
           </div>
         </div>
-        <SubmitButton pending={pending} pendingText="Iniciando…">
-          Iniciar sesión
+        <SubmitButton pending={pending} pendingText={t('Iniciando…')}>
+          {t('Iniciar sesión')}
         </SubmitButton>
       </form>
       <Divider />
@@ -123,12 +125,12 @@ export function LoginForm({ next = '/', resetComplete = false }: { next?: string
         >
           G
         </span>
-        {googlePending ? 'Conectando…' : 'Continuar con Google'}
+        {googlePending ? t('Conectando…') : t('Continuar con Google')}
       </button>
       <p className="mt-8 text-center text-sm text-slate-600">
-        ¿Aún no tienes cuenta?{' '}
-        <Link className="font-bold text-blue-700 hover:text-blue-900" href="/registro">
-          Crear cuenta
+        {t('¿Aún no tienes cuenta?')}{' '}
+        <Link className="font-bold text-blue-700 hover:text-blue-900" href={path('/register')}>
+          {t('Crear cuenta')}
         </Link>
       </p>
     </>

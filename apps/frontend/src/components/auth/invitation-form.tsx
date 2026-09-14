@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
 import { FormField, PasswordField, StatusMessage, SubmitButton } from './form-controls';
+import { useLocale } from '@/components/locale-provider';
 
 export function InvitationForm({
   invitation,
@@ -15,6 +16,7 @@ export function InvitationForm({
   defaultFirstName?: string;
   defaultLastName?: string;
 }) {
+  const { t, path } = useLocale();
   const router = useRouter();
   const [values, setValues] = useState({
     firstName: defaultFirstName,
@@ -32,7 +34,7 @@ export function InvitationForm({
     event.preventDefault();
     setError(null);
     if (values.password !== values.confirmation) {
-      setError('Las contraseñas no coinciden.');
+      setError(t('Las contraseñas no coinciden.'));
       return;
     }
     setPending(true);
@@ -49,13 +51,15 @@ export function InvitationForm({
       });
       const payload = (await response.json()) as { error?: string; code?: string };
       if (!response.ok) {
-        setError(payload.code ? getAuthErrorMessage(payload) : (payload.error ?? 'No pudimos aceptar la invitación.'));
+        setError(
+          t(payload.code ? getAuthErrorMessage(payload) : (payload.error ?? 'No pudimos aceptar la invitación.'))
+        );
         return;
       }
-      router.push('/');
+      router.push(path());
       router.refresh();
     } catch {
-      setError('No pudimos conectar con el servicio. Inténtalo de nuevo.');
+      setError(t('No pudimos conectar con el servicio. Inténtalo de nuevo.'));
     } finally {
       setPending(false);
     }
@@ -64,14 +68,14 @@ export function InvitationForm({
   return (
     <form className="space-y-5" onSubmit={submit}>
       <StatusMessage kind="info">
-        La invitación corresponde a <strong>{invitation.email}</strong>.
+        {t('La invitación corresponde a')} <strong>{invitation.email}</strong>.
       </StatusMessage>
       {error ? <StatusMessage>{error}</StatusMessage> : null}
       <div className="grid gap-5 sm:grid-cols-2">
         <FormField
           autoComplete="given-name"
           id="invite-first-name"
-          label="Nombre"
+          label={t('Nombre')}
           onChange={(event) => update('firstName', event.target.value)}
           required
           value={values.firstName}
@@ -79,7 +83,7 @@ export function InvitationForm({
         <FormField
           autoComplete="family-name"
           id="invite-last-name"
-          label="Apellido"
+          label={t('Apellido')}
           onChange={(event) => update('lastName', event.target.value)}
           required
           value={values.lastName}
@@ -88,7 +92,7 @@ export function InvitationForm({
       <PasswordField
         autoComplete="new-password"
         id="invite-password"
-        label="Contraseña"
+        label={t('Contraseña')}
         maxLength={128}
         minLength={8}
         onChange={(event) => update('password', event.target.value)}
@@ -98,18 +102,20 @@ export function InvitationForm({
       <PasswordField
         autoComplete="new-password"
         error={
-          values.confirmation && values.password !== values.confirmation ? 'Las contraseñas no coinciden.' : undefined
+          values.confirmation && values.password !== values.confirmation
+            ? t('Las contraseñas no coinciden.')
+            : undefined
         }
         id="invite-confirmation"
-        label="Confirmar contraseña"
+        label={t('Confirmar contraseña')}
         maxLength={128}
         minLength={8}
         onChange={(event) => update('confirmation', event.target.value)}
         required
         value={values.confirmation}
       />
-      <SubmitButton pending={pending} pendingText="Aceptando…">
-        Aceptar invitación
+      <SubmitButton pending={pending} pendingText={t('Aceptando…')}>
+        {t('Aceptar invitación')}
       </SubmitButton>
     </form>
   );

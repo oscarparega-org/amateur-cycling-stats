@@ -1,13 +1,18 @@
+'use client';
+
+import { useLocale } from '@/components/locale-provider';
+
 const messages: Record<string, { kind: 'success' | 'error'; text: string }> = {
-  creada: { kind: 'success', text: 'Organización creada. Puedes activarla cuando esté lista.' },
-  actualizada: { kind: 'success', text: 'Cambios guardados.' },
-  activada: { kind: 'success', text: 'Organización activada.' },
-  desactivada: { kind: 'success', text: 'Organización desactivada.' },
-  'error-estado': { kind: 'error', text: 'No se pudo cambiar el estado. Inténtalo de nuevo.' },
-  'estado-invalido': { kind: 'error', text: 'El cambio de estado no es válido.' }
+  created: { kind: 'success', text: 'Organización creada. Puedes activarla cuando esté lista.' },
+  updated: { kind: 'success', text: 'Cambios guardados.' },
+  activated: { kind: 'success', text: 'Organización activada.' },
+  deactivated: { kind: 'success', text: 'Organización desactivada.' },
+  'state-error': { kind: 'error', text: 'No se pudo cambiar el estado. Inténtalo de nuevo.' },
+  'invalid-state': { kind: 'error', text: 'El cambio de estado no es válido.' }
 };
 
 export function AdminStatusMessage({ result }: { result?: string }) {
+  const { t } = useLocale();
   const message = result ? messages[result] : undefined;
   if (!message) return null;
 
@@ -20,7 +25,7 @@ export function AdminStatusMessage({ result }: { result?: string }) {
       }`}
       role={message.kind === 'error' ? 'alert' : 'status'}
     >
-      {message.text}
+      {t(message.text)}
     </div>
   );
 }

@@ -1,13 +1,16 @@
 'use client';
 
 import Link from 'next/link';
+import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import { authClient } from '@/lib/auth-client';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
 import { PasswordField, StatusMessage, SubmitButton } from './form-controls';
+import { useLocale } from '@/components/locale-provider';
 
 export function ResetPasswordForm({ token, linkError }: { token?: string; linkError?: string | null }) {
+  const { t, path } = useLocale();
   const router = useRouter();
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
@@ -17,12 +20,12 @@ export function ResetPasswordForm({ token, linkError }: { token?: string; linkEr
   if (!token)
     return (
       <>
-        <StatusMessage>{error ?? 'El enlace no incluye un token válido.'}</StatusMessage>
+        <StatusMessage>{t(error ?? 'El enlace no incluye un token válido.')}</StatusMessage>
         <Link
           className="mt-6 flex h-12 items-center justify-center rounded-md bg-[#102a43] px-5 font-bold text-white hover:bg-[#173f64]"
-          href="/recuperar-contrasena"
+          href={path('/forgot-password')}
         >
-          Solicitar otro enlace
+          {t('Solicitar otro enlace')}
         </Link>
       </>
     );
@@ -31,17 +34,17 @@ export function ResetPasswordForm({ token, linkError }: { token?: string; linkEr
     event.preventDefault();
     setError(null);
     if (password !== confirmation) {
-      setError('Las contraseñas no coinciden.');
+      setError(t('Las contraseñas no coinciden.'));
       return;
     }
     setPending(true);
     const result = await authClient.resetPassword({ newPassword: password, token });
     setPending(false);
     if (result.error) {
-      setError(getAuthErrorMessage(result.error));
+      setError(t(getAuthErrorMessage(result.error)));
       return;
     }
-    router.push('/iniciar-sesion?reset=completo');
+    router.push(`${path('/login')}?reset=complete` as Route);
   }
 
   return (
@@ -50,7 +53,7 @@ export function ResetPasswordForm({ token, linkError }: { token?: string; linkEr
       <PasswordField
         autoComplete="new-password"
         id="new-password"
-        label="Nueva contraseña (8–128 caracteres)"
+        label={t('Nueva contraseña')}
         maxLength={128}
         minLength={8}
         onChange={(event) => setPassword(event.target.value)}
@@ -59,17 +62,18 @@ export function ResetPasswordForm({ token, linkError }: { token?: string; linkEr
       />
       <PasswordField
         autoComplete="new-password"
-        error={confirmation && password !== confirmation ? 'Las contraseñas no coinciden.' : undefined}
+        error={confirmation && password !== confirmation ? t('Las contraseñas no coinciden.') : undefined}
         id="confirm-new-password"
-        label="Confirmar contraseña"
+        label={t('Confirmar contraseña')}
         maxLength={128}
         minLength={8}
         onChange={(event) => setConfirmation(event.target.value)}
         required
         value={confirmation}
       />
-      <SubmitButton pending={pending} pendingText="Guardando…">
-        Cambiar contraseña
+      <p className="text-sm leading-6 text-slate-500">{t('Usa entre 8 y 128 caracteres.')}</p>
+      <SubmitButton pending={pending} pendingText={t('Guardando…')}>
+        {t('Cambiar contraseña')}
       </SubmitButton>
     </form>
   );

@@ -1,13 +1,16 @@
 'use client';
 
 import Link from 'next/link';
+import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import { authClient } from '@/lib/auth-client';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
 import { FormField, PasswordField, StatusMessage, SubmitButton } from './form-controls';
+import { useLocale } from '@/components/locale-provider';
 
 export function RegisterForm() {
+  const { t, path } = useLocale();
   const router = useRouter();
   const [values, setValues] = useState({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '' });
   const [pending, setPending] = useState(false);
@@ -21,7 +24,7 @@ export function RegisterForm() {
     event.preventDefault();
     setError(null);
     if (values.password !== values.confirmPassword) {
-      setError('Las contraseñas no coinciden.');
+      setError(t('Las contraseñas no coinciden.'));
       return;
     }
     setPending(true);
@@ -31,14 +34,14 @@ export function RegisterForm() {
       name: `${values.firstName.trim()} ${values.lastName.trim()}`.trim(),
       firstName: values.firstName.trim(),
       lastName: values.lastName.trim(),
-      callbackURL: '/correo-verificado'
+      callbackURL: path('/email-verified')
     });
     setPending(false);
     if (result.error) {
-      setError(getAuthErrorMessage(result.error));
+      setError(t(getAuthErrorMessage(result.error)));
       return;
     }
-    router.push(`/verifica-tu-correo?email=${encodeURIComponent(values.email)}`);
+    router.push(`${path('/verify-email')}?email=${encodeURIComponent(values.email)}` as Route);
   }
 
   return (
@@ -49,7 +52,7 @@ export function RegisterForm() {
           <FormField
             autoComplete="given-name"
             id="firstName"
-            label="Nombre"
+            label={t('Nombre')}
             onChange={(event) => update('firstName', event.target.value)}
             required
             value={values.firstName}
@@ -57,7 +60,7 @@ export function RegisterForm() {
           <FormField
             autoComplete="family-name"
             id="lastName"
-            label="Apellido"
+            label={t('Apellido')}
             onChange={(event) => update('lastName', event.target.value)}
             required
             value={values.lastName}
@@ -66,8 +69,9 @@ export function RegisterForm() {
         <FormField
           autoComplete="email"
           id="email"
-          label="Correo electrónico"
+          label={t('Correo electrónico')}
           onChange={(event) => update('email', event.target.value)}
+          placeholder="nombre@correo.com"
           required
           type="email"
           value={values.email}
@@ -75,7 +79,7 @@ export function RegisterForm() {
         <PasswordField
           autoComplete="new-password"
           id="password"
-          label="Contraseña (8–128 caracteres)"
+          label={t('Contraseña')}
           maxLength={128}
           minLength={8}
           onChange={(event) => update('password', event.target.value)}
@@ -86,25 +90,26 @@ export function RegisterForm() {
           autoComplete="new-password"
           error={
             values.confirmPassword && values.password !== values.confirmPassword
-              ? 'Las contraseñas no coinciden.'
+              ? t('Las contraseñas no coinciden.')
               : undefined
           }
           id="confirmPassword"
-          label="Confirmar contraseña"
+          label={t('Confirmar contraseña')}
           maxLength={128}
           minLength={8}
           onChange={(event) => update('confirmPassword', event.target.value)}
           required
           value={values.confirmPassword}
         />
-        <SubmitButton pending={pending} pendingText="Creando cuenta…">
-          Crear cuenta
+        <p className="text-sm leading-6 text-slate-500">{t('Usa entre 8 y 128 caracteres.')}</p>
+        <SubmitButton pending={pending} pendingText={t('Creando cuenta…')}>
+          {t('Crear cuenta')}
         </SubmitButton>
       </form>
       <p className="mt-8 text-center text-sm text-slate-600">
-        ¿Ya tienes cuenta?{' '}
-        <Link className="font-bold text-blue-700 hover:text-blue-900" href="/iniciar-sesion">
-          Iniciar sesión
+        {t('¿Ya tienes cuenta?')}{' '}
+        <Link className="font-bold text-blue-700 hover:text-blue-900" href={path('/login')}>
+          {t('Iniciar sesión')}
         </Link>
       </p>
     </>

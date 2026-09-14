@@ -19,7 +19,7 @@ export default defineConfig({
   ],
   webServer: {
     command: `npm run dev -- --port ${webPort}`,
-    url: `${baseURL}/iniciar-sesion`,
+    url: `${baseURL}/es/login`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000
   }

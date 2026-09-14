@@ -28,7 +28,7 @@ describe('EventList', () => {
   it('renders an event as a complete link with organizer and location', () => {
     render(<EventList events={[event]} />);
 
-    expect(screen.getByRole('link', { name: /Gran Fondo Sierra/ })).toHaveAttribute('href', '/eventos/event-1');
+    expect(screen.getByRole('link', { name: /Gran Fondo Sierra/ })).toHaveAttribute('href', '/es/events/event-1');
     expect(screen.getByText('Club Ciclista Norte')).toBeInTheDocument();
     expect(screen.getByText('Guadalajara, Jalisco, México')).toBeInTheDocument();
     expect(screen.getAllByText('Disponible')).toHaveLength(2);
@@ -38,6 +38,14 @@ describe('EventList', () => {
     render(<EventList events={[]} />);
     expect(screen.getByText('No hay próximos eventos')).toBeInTheDocument();
     expect(screen.queryByText(/nueva carrera/)).not.toBeInTheDocument();
+  });
+
+  it('renders English content and an English locale URL', () => {
+    render(<EventList events={[event]} locale="en" />);
+
+    expect(screen.getByRole('link', { name: /Gran Fondo Sierra/ })).toHaveAttribute('href', '/en/events/event-1');
+    expect(screen.getAllByText('Available')).toHaveLength(2);
+    expect(screen.getAllByText(/View event/).length).toBeGreaterThan(0);
   });
 });
 

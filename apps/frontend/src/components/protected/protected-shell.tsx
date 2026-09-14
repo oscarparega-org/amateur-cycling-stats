@@ -1,6 +1,10 @@
+'use client';
+
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
+import { LocaleSwitcher } from '@/components/locale-switcher';
+import { useLocale } from '@/components/locale-provider';
 import { ProtectedNav, type ProtectedNavItem } from './protected-nav';
 import { ProtectedSignOut } from './protected-sign-out';
 
@@ -17,6 +21,7 @@ export function ProtectedShell({
   roleLabel: string;
   workspace?: ReactNode;
 }) {
+  const { t, path } = useLocale();
   return (
     <div className="min-h-screen bg-[var(--workspace-canvas)] text-[#102a43] lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
       <aside className="hidden bg-[#102a43] text-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
@@ -27,6 +32,9 @@ export function ProtectedShell({
         {workspace ? <div className="border-b border-white/10 px-5 py-5">{workspace}</div> : null}
         <ProtectedNav items={navigation} />
         <div className="mt-auto border-t border-white/10 p-5">
+          <div className="mb-4">
+            <LocaleSwitcher inverse />
+          </div>
           <p className="truncate text-sm font-semibold">{account.name}</p>
           {account.email ? <p className="mt-0.5 truncate text-xs text-slate-300">{account.email}</p> : null}
           <div className="mt-4">
@@ -51,8 +59,8 @@ export function ProtectedShell({
         </div>
         <header className="hidden min-h-16 items-center justify-between border-b border-slate-200 bg-white px-10 lg:flex">
           <ProtectedNav items={navigation} header />
-          <Link className="text-sm font-bold text-[var(--workspace-steel)] hover:text-[#102a43]" href="/">
-            Ver sitio público
+          <Link className="text-sm font-bold text-[var(--workspace-steel)] hover:text-[#102a43]" href={path()}>
+            {t('Ver sitio público')}
           </Link>
         </header>
         <main className="mx-auto w-full max-w-[86rem] px-5 py-8 sm:px-8 lg:px-12 lg:py-10">{children}</main>

@@ -1,0 +1,38 @@
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import type { Organization } from '@acs/shared';
+import { OrganizationForm } from '@/components/admin/organization-form';
+import { backendFetch } from '@/lib/backend';
+import { localePath, resolveLocale, translate } from '@/lib/i18n';
+
+export default async function EditOrganizationPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
+  const { id, locale: value } = await params;
+  const locale = resolveLocale(value);
+  const t = (text: string) => translate(locale, text);
+  const response = await backendFetch(`/api/organizations/${encodeURIComponent(id)}`);
+  if (response.status === 404) notFound();
+  if (!response.ok) throw new Error('Organization request failed');
+  const organization = (await response.json()) as Organization;
+
+  return (
+    <>
+      <Link
+        className="text-sm font-bold text-blue-700 hover:text-blue-900"
+        href={localePath(locale, `/admin/organizations/${organization.id}`)}
+      >
+        {t('Volver a')} {organization.name}
+      </Link>
+      <div className="mt-6 border-b border-slate-300 pb-7">
+        <h1 className="display-font text-5xl font-semibold leading-none tracking-tight text-[#102a43] sm:text-6xl">
+          {t('Editar organización')}
+        </h1>
+        <p className="mt-3 max-w-xl leading-7 text-slate-600">
+          {t('Actualiza la información visible para administradores y organizadores.')}
+        </p>
+      </div>
+      <div className="mt-8">
+        <OrganizationForm organization={organization} />
+      </div>
+    </>
+  );
+}

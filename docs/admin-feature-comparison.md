@@ -50,18 +50,18 @@ The legacy reference is `archive/svelte-supabase-v1` in the root worktree. The e
 | Race-result administration         | **Not implemented** under the legacy `/admin` routes.                                                                                                 | **Backend only.** Race-result CRUD endpoints exist, but there is no admin UI.                                                                                                              | Product requirements are needed before building the workflow.                                                                     |
 | Admin-user management              | **Not implemented.**                                                                                                                                  | **Not implemented.**                                                                                                                                                                       | Out of the current scope.                                                                                                         |
 | Audit log and operational settings | **Not implemented.**                                                                                                                                  | **Not implemented.**                                                                                                                                                                       | Out of the current scope.                                                                                                         |
-| Localization                       | **Complete.** Legacy management UI supports English and Spanish translations.                                                                         | **Partial.** The current admin UI is written in Spanish and does not yet use a localization framework.                                                                                     | Introduce localization only when a second locale is an active requirement.                                                        |
+| Localization                       | **Complete.** Legacy management UI supports English and Spanish translations.                                                                         | **Implemented for English and Spanish.** Locale-prefixed routes keep URL slugs in English while translating page content.                                                                  | Add another dictionary only when a new locale becomes an active requirement.                                                      |
 | Automated admin coverage           | Strong browser coverage exists for admin access, organizations, and global categories; deeper nested areas have less coverage.                        | Unit coverage exists for organization input validation. Backend E2E cases cover role lookup and inactive organization creation, but require a container runtime.                           | Add authenticated browser coverage once the worktree browser test fixture includes the admin flow.                                |
 
 ## Current admin routes
 
-| Route                               | Purpose                                                |
-| ----------------------------------- | ------------------------------------------------------ |
-| `/admin`                            | Redirects to the implemented organization section.     |
-| `/admin/organizaciones`             | Lists organizations and their current state.           |
-| `/admin/organizaciones/nueva`       | Creates an inactive organization.                      |
-| `/admin/organizaciones/[id]`        | Shows organization information and lifecycle controls. |
-| `/admin/organizaciones/[id]/editar` | Updates organization name and description.             |
+| Route                                     | Purpose                                                |
+| ----------------------------------------- | ------------------------------------------------------ |
+| `/[locale]/admin`                         | Redirects to the implemented organization section.     |
+| `/[locale]/admin/organizations`           | Lists organizations and their current state.           |
+| `/[locale]/admin/organizations/new`       | Creates an inactive organization.                      |
+| `/[locale]/admin/organizations/[id]`      | Shows organization information and lifecycle controls. |
+| `/[locale]/admin/organizations/[id]/edit` | Updates organization name and description.             |
 
 ## Suggested implementation order after the initial slice
 
@@ -84,7 +84,7 @@ The legacy reference is `archive/svelte-supabase-v1` in the root worktree. The e
 ### Active application
 
 - Admin route guard: `apps/frontend/src/app/admin/layout.tsx`
-- Admin organization pages: `apps/frontend/src/app/admin/organizaciones`
+- Admin organization pages: `apps/frontend/src/app/[locale]/admin/organizations`
 - Organization server actions: `apps/frontend/src/lib/organization-actions.ts`
 - Organization API: `apps/backend/src/routes/organizations.ts`
 - Current-user role endpoint: `apps/backend/src/routes/auth-setup.ts`

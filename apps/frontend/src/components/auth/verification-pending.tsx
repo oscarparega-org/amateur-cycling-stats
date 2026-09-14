@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { authClient } from '@/lib/auth-client';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
 import { FormField, StatusMessage, SubmitButton } from './form-controls';
+import { useLocale } from '@/components/locale-provider';
 
 function maskEmail(email: string): string {
   const [name, domain] = email.split('@');
@@ -13,6 +14,7 @@ function maskEmail(email: string): string {
 }
 
 export function VerificationPending({ initialEmail = '' }: { initialEmail?: string }) {
+  const { t, path } = useLocale();
   const [email, setEmail] = useState(initialEmail);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -23,10 +25,10 @@ export function VerificationPending({ initialEmail = '' }: { initialEmail?: stri
     setPending(true);
     setError(null);
     setMessage(null);
-    const result = await authClient.sendVerificationEmail({ email, callbackURL: '/correo-verificado' });
+    const result = await authClient.sendVerificationEmail({ email, callbackURL: path('/email-verified') });
     setPending(false);
-    if (result.error) setError(getAuthErrorMessage(result.error));
-    else setMessage('Enviamos un nuevo enlace. Revisa también tu carpeta de correo no deseado.');
+    if (result.error) setError(t(getAuthErrorMessage(result.error)));
+    else setMessage(t('Enviamos un nuevo enlace. Revisa también tu carpeta de correo no deseado.'));
   }
 
   return (
@@ -34,12 +36,12 @@ export function VerificationPending({ initialEmail = '' }: { initialEmail?: stri
       <div className="mb-6 border-l-4 border-[#f97316] bg-orange-50 px-4 py-4 text-sm leading-6 text-orange-950">
         {initialEmail ? (
           <>
-            Enviamos el enlace a <strong>{maskEmail(initialEmail)}</strong>.
+            {t('Enviamos el enlace a')} <strong>{maskEmail(initialEmail)}</strong>.
           </>
         ) : (
-          'Escribe el correo que usaste al registrarte.'
+          t('Escribe el correo que usaste al registrarte.')
         )}{' '}
-        El enlace vence en una hora.
+        {t('El enlace vence en una hora.')}
       </div>
       <form className="space-y-5" onSubmit={resend}>
         {message ? <StatusMessage kind="success">{message}</StatusMessage> : null}
@@ -47,19 +49,19 @@ export function VerificationPending({ initialEmail = '' }: { initialEmail?: stri
         <FormField
           autoComplete="email"
           id="verification-email"
-          label="Correo electrónico"
+          label={t('Correo electrónico')}
           onChange={(event) => setEmail(event.target.value)}
           required
           type="email"
           value={email}
         />
-        <SubmitButton pending={pending} pendingText="Enviando…">
-          Reenviar enlace
+        <SubmitButton pending={pending} pendingText={t('Enviando…')}>
+          {t('Reenviar enlace')}
         </SubmitButton>
       </form>
       <p className="mt-8 text-center text-sm">
-        <Link className="font-bold text-blue-700 hover:text-blue-900" href="/iniciar-sesion">
-          Volver a iniciar sesión
+        <Link className="font-bold text-blue-700 hover:text-blue-900" href={path('/login')}>
+          {t('Volver a iniciar sesión')}
         </Link>
       </p>
     </>
