@@ -6,6 +6,8 @@ import process from 'node:process';
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const composePath = resolve(repositoryRoot, 'docker-compose.coolify.yml');
+const ciComposePath = resolve(repositoryRoot, '.github/docker-compose.ci.yml');
+const configOnly = process.argv.includes('--config-only');
 const compose = (await readFile(composePath, 'utf8')).replace(/^\s*exclude_from_hc:\s*true\s*$/gm, '');
 const environment = {
   ...process.env,
@@ -22,8 +24,13 @@ const environment = {
 };
 
 function runCompose(args) {
+  const composeFiles = ['-f', '-'];
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    composeFiles.push('-f', ciComposePath);
+  }
+
   return new Promise((resolvePromise, reject) => {
-    const child = spawn('docker', ['compose', '--project-directory', repositoryRoot, '-f', '-', ...args], {
+    const child = spawn('docker', ['compose', '--project-directory', repositoryRoot, ...composeFiles, ...args], {
       cwd: repositoryRoot,
       env: environment,
       stdio: ['pipe', 'inherit', 'inherit']
@@ -43,8 +50,10 @@ function runCompose(args) {
 
 try {
   await runCompose(['config', '--quiet']);
-  for (const service of ['migrate', 'backend', 'frontend']) {
-    await runCompose(['build', service]);
+  if (!configOnly) {
+    // migrate and backend intentionally share the same Dockerfile. Building the two
+    // unique images together lets BuildKit reuse work and parallelize their stages.
+    await runCompose(['build', 'backend', 'frontend']);
   }
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);

@@ -1,0 +1,14 @@
+services:
+  backend:
+    build:
+      cache_from:
+        - type=gha,scope=acs-backend
+      cache_to:
+        - type=gha,mode=max,scope=acs-backend
+
+  frontend:
+    build:
+      cache_from:
+        - type=gha,scope=acs-frontend
+      cache_to:
+        - type=gha,mode=max,scope=acs-frontend
