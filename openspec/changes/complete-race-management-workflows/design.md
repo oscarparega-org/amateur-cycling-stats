@@ -16,7 +16,7 @@ The race API currently permits caller-provided names, defaults visibility to fal
 
 ## Decisions
 
-- Generate the persisted name in the service after loading category names; ignore caller-provided generated names.
+- Derive the display name from the current related category names in the adapter; the API never accepts a writable race name.
 - Preserve the database composite uniqueness constraint and translate conflicts to a stable API error.
 - Change the Prisma default to public and gate public reads by both race and event eligibility.
 - Add explicit result cascade behavior and calculate the warning count before confirmation; repeat authorization and delete atomically on submit.
@@ -25,7 +25,7 @@ The race API currently permits caller-provided names, defaults visibility to fal
 
 ## Risks / Trade-offs
 
-- [Name changes when a category is renamed] → Regenerate names for affected races transactionally or derive display names while preserving an audit-safe snapshot policy.
+- [Name changes when a category is renamed] → Always derive display names from current category relations so every consumer sees the same current labels.
 - [Visibility default changes existing expectations] → Apply the new default only to newly created races and leave existing values unchanged.
 - [Concurrent new results after warning count] → Delete and count inside the final transaction and report the actual deleted count.
 
@@ -36,6 +36,6 @@ The race API currently permits caller-provided names, defaults visibility to fal
 3. Change the new-record visibility default without rewriting existing rows.
 4. Add shared Next.js management routes and confirmation flows.
 
-## Open Questions
+## Resolved Questions
 
-- Decide whether persisted generated names are historical snapshots or always track category renames before implementing rename propagation.
+- Race names always track current category labels and are not treated as historical snapshots.

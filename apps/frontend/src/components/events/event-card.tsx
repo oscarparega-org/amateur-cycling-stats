@@ -6,7 +6,7 @@ import { EventStatus } from './event-status';
 import { localePath, translate, type Locale } from '@/lib/i18n';
 
 export function EventCard({ event, locale = 'es' }: { event: EventWithOrganization; locale?: Locale }) {
-  const date = eventDateParts(event.dateTime, locale);
+  const date = eventDateParts(event.dateTime, event.timeZone, locale);
   const t = (text: string) => translate(locale, text);
   const location = formatEventLocation(event);
 

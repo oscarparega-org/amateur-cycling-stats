@@ -9,6 +9,7 @@ const event: Event = {
   name: 'Gran Fondo del Valle',
   description: 'Ruta de prueba',
   dateTime: '2026-10-18T14:30:00.000Z',
+  timeZone: 'America/Mexico_City',
   year: 2026,
   city: 'Valle de Bravo',
   state: 'Estado de México',

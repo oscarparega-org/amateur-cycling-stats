@@ -15,7 +15,7 @@ export interface RaceResult {
   eventState: string;
   eventCountry: string;
   eventStatus: string;
-  raceName: string | null;
+  raceName: string;
   raceDateTime: string;
   raceCategoryType: string;
   raceCategoryGenderType: string;

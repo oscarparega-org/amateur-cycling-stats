@@ -31,12 +31,17 @@ Admin and organizer event detail pages SHALL expose a Races tab with consistent 
 
 ### Requirement: Generated race name
 
-The system SHALL generate a race name from the selected age, gender, and distance category names and SHALL regenerate it when the combination changes.
+The system SHALL derive a race name from the current selected age, gender, and distance category names, SHALL reject caller-provided names as writable input, and SHALL reflect category renames without persisting stale labels.
 
 #### Scenario: Select all categories
 
 - **WHEN** a user selects one category of each type
 - **THEN** the form previews and saves `<Age> - <Gender> - <Distance>`
+
+#### Scenario: Rename a selected category
+
+- **WHEN** an authorized user renames a category used by an existing race
+- **THEN** subsequent race reads show a name derived from the category's current label
 
 ### Requirement: Race form behavior
 

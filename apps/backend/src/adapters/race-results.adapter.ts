@@ -39,7 +39,7 @@ export function adaptRaceResult(result: PrismaRaceResultWithRelations): RaceResu
     eventState: race.event.state,
     eventCountry: race.event.country,
     eventStatus: race.event.eventStatus,
-    raceName: race.name,
+    raceName: `${race.categoryAge.name} - ${race.categoryGender.name} - ${race.categoryDistance.name}`,
     raceDateTime: race.dateTime.toISOString(),
     raceCategoryType: race.categoryAge.name,
     raceCategoryGenderType: race.categoryGender.name,

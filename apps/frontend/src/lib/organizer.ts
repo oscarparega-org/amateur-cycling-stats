@@ -32,7 +32,7 @@ export const getOrganization = cache(async (organizationId: string): Promise<Org
 export async function getOrganizationEvents(organizationId: string, filter: EventFilter): Promise<Event[]> {
   const query = new URLSearchParams({ organizationId });
   if (filter !== 'all') query.set('filter', filter);
-  const response = await backendFetch(`/api/events?${query.toString()}`);
+  const response = await backendFetch(`/api/events/management?${query.toString()}`);
   if (!response.ok) throw new Error(await responseError(response));
   return (await response.json()) as Event[];
 }

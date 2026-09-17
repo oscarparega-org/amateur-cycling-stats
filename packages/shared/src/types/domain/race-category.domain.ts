@@ -1,32 +1,34 @@
-export interface RaceCategoryAge {
+export type CategoryScope =
+  | { scope: 'GLOBAL'; organizationId: null; eventId: null }
+  | { scope: 'ORGANIZATION'; organizationId: string; eventId: null }
+  | { scope: 'EVENT'; organizationId: null; eventId: string };
+
+interface RaceCategoryBase {
   id: string;
   name: string;
-  fromAge: number | null;
-  toAge: number | null;
-  isGlobal: boolean;
   isDefault: boolean;
-  organizationId: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface RaceCategoryGender {
-  id: string;
-  name: string;
-  isGlobal: boolean;
-  isDefault: boolean;
-  organizationId: string | null;
-  createdAt: string;
-  updatedAt: string;
+export type RaceCategoryAge = RaceCategoryBase &
+  CategoryScope & {
+    fromAge: number | null;
+    toAge: number | null;
+  };
+
+export type RaceCategoryGender = RaceCategoryBase & CategoryScope;
+
+export type RaceCategoryDistance = RaceCategoryBase & CategoryScope & { distance: number | null };
+
+export interface ScopedCategoryCollection<T> {
+  global: T[];
+  organization: T[];
+  event: T[];
 }
 
-export interface RaceCategoryDistance {
-  id: string;
-  name: string;
-  distance: number | null;
-  isGlobal: boolean;
-  isDefault: boolean;
-  organizationId: string | null;
-  createdAt: string;
-  updatedAt: string;
+export interface AvailableCategories {
+  age: ScopedCategoryCollection<RaceCategoryAge>;
+  gender: ScopedCategoryCollection<RaceCategoryGender>;
+  distance: ScopedCategoryCollection<RaceCategoryDistance>;
 }

@@ -9,6 +9,7 @@ const event: EventWithOrganization = {
   name: 'Gran Fondo Sierra',
   description: 'Una ruta de montaña para ciclistas amateur.',
   dateTime: '2030-09-21T14:00:00.000Z',
+  timeZone: 'America/Mexico_City',
   year: 2030,
   city: 'Guadalajara',
   state: 'Jalisco',

@@ -5,15 +5,22 @@ import type {
   RaceCategoryLength as PrismaRaceCategoryLength
 } from '@prisma/client';
 
+function ownership(cat: { organizationId: string | null; eventId: string | null }) {
+  if (cat.eventId) return { scope: 'EVENT' as const, organizationId: null, eventId: cat.eventId };
+  if (cat.organizationId) {
+    return { scope: 'ORGANIZATION' as const, organizationId: cat.organizationId, eventId: null };
+  }
+  return { scope: 'GLOBAL' as const, organizationId: null, eventId: null };
+}
+
 export function adaptAgeCategory(cat: PrismaRaceCategory): RaceCategoryAge {
   return {
     id: cat.id,
     name: cat.name,
     fromAge: cat.fromAge,
     toAge: cat.toAge,
-    isGlobal: cat.isGlobal,
     isDefault: cat.isDefault,
-    organizationId: cat.organizationId,
+    ...ownership(cat),
     createdAt: cat.createdAt.toISOString(),
     updatedAt: cat.updatedAt.toISOString()
   };
@@ -23,9 +30,8 @@ export function adaptGenderCategory(cat: PrismaRaceCategoryGender): RaceCategory
   return {
     id: cat.id,
     name: cat.name,
-    isGlobal: cat.isGlobal,
     isDefault: cat.isDefault,
-    organizationId: cat.organizationId,
+    ...ownership(cat),
     createdAt: cat.createdAt.toISOString(),
     updatedAt: cat.updatedAt.toISOString()
   };
@@ -36,9 +42,8 @@ export function adaptDistanceCategory(cat: PrismaRaceCategoryLength): RaceCatego
     id: cat.id,
     name: cat.name,
     distance: cat.distance,
-    isGlobal: cat.isGlobal,
     isDefault: cat.isDefault,
-    organizationId: cat.organizationId,
+    ...ownership(cat),
     createdAt: cat.createdAt.toISOString(),
     updatedAt: cat.updatedAt.toISOString()
   };

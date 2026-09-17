@@ -17,7 +17,7 @@ The backend currently offers flat CRUD with public reads and caller-supplied yea
 
 - Put lifecycle and deletion policy in the event service and enforce authorization in routes; clients never decide eligibility.
 - Separate public event endpoints from authenticated management queries so public filtering cannot accidentally expose drafts.
-- Derive `year` server-side from `dateTime` and validate request bodies with a runtime schema at the route boundary.
+- Store a required IANA `timeZone`, convert submitted local date/time to UTC, and derive `year` in that timezone. Existing events are backfilled to `UTC`.
 - Keep event and race visibility independent, while public race access requires both event and race eligibility.
 - Use database cascades only for dependents explicitly approved for deletion and wrap destructive operations in a transaction.
 - Build shared React views with admin/organizer route adapters rather than duplicating management components.

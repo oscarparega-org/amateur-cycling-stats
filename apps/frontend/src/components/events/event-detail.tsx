@@ -5,7 +5,7 @@ import { EventStatus } from './event-status';
 import { localePath, translate, type Locale } from '@/lib/i18n';
 
 export function EventDetail({ event, locale = 'es' }: { event: EventWithOrganization; locale?: Locale }) {
-  const date = eventDateParts(event.dateTime, locale);
+  const date = eventDateParts(event.dateTime, event.timeZone, locale);
   const t = (text: string) => translate(locale, text);
   const location = formatEventLocation(event);
 
@@ -53,9 +53,9 @@ export function EventDetail({ event, locale = 'es' }: { event: EventWithOrganiza
           <div className="border-b border-slate-200 pb-5">
             <dt className="font-semibold text-slate-600">{t('Cuándo')}</dt>
             <dd className="mt-1 text-lg font-semibold text-[#102a43]">
-              <time dateTime={event.dateTime}>{formatEventDate(event.dateTime, locale)}</time>
+              <time dateTime={event.dateTime}>{formatEventDate(event.dateTime, event.timeZone, locale)}</time>
             </dd>
-            <dd className="text-slate-600">{formatEventTime(event.dateTime, locale)}</dd>
+            <dd className="text-slate-600">{formatEventTime(event.dateTime, event.timeZone, locale)}</dd>
           </div>
           <div className="pt-5">
             <dt className="font-semibold text-slate-600">{t('Dónde')}</dt>

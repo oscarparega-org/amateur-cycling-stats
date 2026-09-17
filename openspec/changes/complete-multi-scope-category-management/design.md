@@ -21,6 +21,10 @@ Three tables currently use `isGlobal` plus optional `organizationId`. The target
 - Resolve event ownership server-side and validate every selected category against the race's event and organization.
 - Factor common service helpers and React category screens while keeping type-specific input schemas.
 - Use explicit API scope parameters/endpoints for management lists; do not overload a public query in ways that disclose other scopes.
+- Enforce trimmed, case-insensitive names uniquely within each owner scope while allowing the same label at different scopes.
+- Use the active single `ORGANIZER` membership role for organization and event writes.
+- Present inherited scopes read-only and share the same React management components between admin and organizer routes.
+- Do not migrate legacy distance description or route embed HTML; race descriptions remain the active content field.
 
 ## Risks / Trade-offs
 
@@ -30,11 +34,10 @@ Three tables currently use `isGlobal` plus optional `organizationId`. The target
 
 ## Migration Plan
 
-1. Add `eventId` and ownership constraints while retaining `isGlobal` temporarily.
-2. Backfill ownership and deploy dual-read code plus category compatibility tests.
-3. Switch APIs/shared types/UI to derived scope and validate race ownership.
-4. Drop `isGlobal` in a follow-up migration after no old client depends on it.
+1. Audit and normalize existing owner data.
+2. Add `eventId`, ownership constraints, and scoped indexes, then remove `isGlobal` in the same tested deployment migration.
+3. Ship the derived-scope shared/API contract and category ownership validation atomically with that migration.
 
-## Open Questions
+## Resolved Questions
 
-- Name uniqueness should be finalized per category type and scope before the migration is generated; legacy sources conflict between global uniqueness and duplicate event labels.
+- Category names are unique per global set, organization, or event, not table-wide.

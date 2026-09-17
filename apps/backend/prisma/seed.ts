@@ -175,33 +175,30 @@ async function main() {
     'Rango 65-69'
   ];
   for (const name of categories) {
-    await prisma.raceCategory.upsert({
-      where: { name },
-      update: {},
-      create: { name, isGlobal: true, isDefault: name === 'Absoluta' }
+    const existing = await prisma.raceCategory.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' }, organizationId: null, eventId: null }
     });
+    if (!existing) await prisma.raceCategory.create({ data: { name, isDefault: name === 'Absoluta' } });
   }
   console.log(`  ✓ ${categories.length} race categories`);
 
   // Race category genders
   const categoryGenders = ['Femenino', 'Masculino', 'Abierto'];
   for (const name of categoryGenders) {
-    await prisma.raceCategoryGender.upsert({
-      where: { name },
-      update: {},
-      create: { name, isGlobal: true, isDefault: name === 'Abierto' }
+    const existing = await prisma.raceCategoryGender.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' }, organizationId: null, eventId: null }
     });
+    if (!existing) await prisma.raceCategoryGender.create({ data: { name, isDefault: name === 'Abierto' } });
   }
   console.log(`  ✓ ${categoryGenders.length} race category genders`);
 
   // Race category lengths
   const categoryLengths = ['Larga', 'Corta', 'Sprint', 'Única'];
   for (const name of categoryLengths) {
-    await prisma.raceCategoryLength.upsert({
-      where: { name },
-      update: {},
-      create: { name, isGlobal: true, isDefault: name === 'Única' }
+    const existing = await prisma.raceCategoryLength.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' }, organizationId: null, eventId: null }
     });
+    if (!existing) await prisma.raceCategoryLength.create({ data: { name, isDefault: name === 'Única' } });
   }
   console.log(`  ✓ ${categoryLengths.length} race category lengths`);
 

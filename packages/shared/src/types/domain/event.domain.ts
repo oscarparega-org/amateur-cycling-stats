@@ -5,6 +5,7 @@ export interface Event {
   name: string;
   description: string | null;
   dateTime: string;
+  timeZone: string;
   year: number;
   city: string | null;
   state: string;

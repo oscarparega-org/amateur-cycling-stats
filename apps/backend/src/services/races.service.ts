@@ -1,4 +1,5 @@
 import type { Race } from '@acs/shared';
+import { EventStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { adaptRace, raceInclude } from '../adapters/races.adapter.js';
 
@@ -6,7 +7,9 @@ export async function getRacesByEventId(eventId: string, includePrivate = false)
   const races = await prisma.race.findMany({
     where: {
       eventId,
-      ...(includePrivate ? {} : { isPublicVisible: true, event: { isPublicVisible: true } })
+      ...(includePrivate
+        ? {}
+        : { isPublicVisible: true, event: { isPublicVisible: true, eventStatus: { not: EventStatus.DRAFT } } })
     },
     include: raceInclude,
     orderBy: { dateTime: 'asc' }
@@ -18,7 +21,9 @@ export async function getRaceById(id: string, includePrivate = false): Promise<R
   const race = await prisma.race.findFirst({
     where: {
       id,
-      ...(includePrivate ? {} : { isPublicVisible: true, event: { isPublicVisible: true } })
+      ...(includePrivate
+        ? {}
+        : { isPublicVisible: true, event: { isPublicVisible: true, eventStatus: { not: EventStatus.DRAFT } } })
     },
     include: raceInclude
   });
@@ -31,7 +36,6 @@ export async function createRace(data: {
   raceCategoryGenderId: string;
   raceCategoryDistanceId: string;
   dateTime: string;
-  name?: string;
   description?: string;
 }): Promise<Race> {
   const race = await prisma.race.create({
@@ -41,7 +45,6 @@ export async function createRace(data: {
       raceCategoryGenderId: data.raceCategoryGenderId,
       raceCategoryDistanceId: data.raceCategoryDistanceId,
       dateTime: new Date(data.dateTime),
-      name: data.name ?? null,
       description: data.description ?? null
     },
     include: raceInclude
@@ -52,7 +55,6 @@ export async function createRace(data: {
 export async function updateRace(
   id: string,
   data: Partial<{
-    name: string | null;
     description: string | null;
     dateTime: string;
     raceCategoryAgeId: string;
@@ -73,9 +75,14 @@ export async function updateRace(
   return adaptRace(updated);
 }
 
-export async function deleteRace(id: string): Promise<boolean> {
-  const race = await prisma.race.findUnique({ where: { id } });
-  if (!race) return false;
-  await prisma.race.delete({ where: { id } });
-  return true;
+export async function deleteRace(id: string): Promise<{ success: true; deletedResults: number } | null> {
+  return prisma.$transaction(async (transaction) => {
+    const race = await transaction.race.findUnique({
+      where: { id },
+      select: { id: true, _count: { select: { results: true } } }
+    });
+    if (!race) return null;
+    await transaction.race.delete({ where: { id } });
+    return { success: true, deletedResults: race._count.results };
+  });
 }

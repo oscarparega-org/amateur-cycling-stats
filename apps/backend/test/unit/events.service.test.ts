@@ -1,17 +1,37 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Prisma } from '@prisma/client';
 
 const prismaMocks = vi.hoisted(() => ({
   findMany: vi.fn(),
-  findFirst: vi.fn()
+  findFirst: vi.fn(),
+  findUnique: vi.fn(),
+  update: vi.fn(),
+  transaction: vi.fn(),
+  txQueryRaw: vi.fn(),
+  txEventFindUnique: vi.fn(),
+  txEventDelete: vi.fn(),
+  txRaceDeleteMany: vi.fn()
 }));
 
 vi.mock('../../src/lib/prisma.js', () => ({
   prisma: {
-    event: prismaMocks
+    event: {
+      findMany: prismaMocks.findMany,
+      findFirst: prismaMocks.findFirst,
+      findUnique: prismaMocks.findUnique,
+      update: prismaMocks.update
+    },
+    $transaction: prismaMocks.transaction
   }
 }));
 
-import { getEventById, getFutureEvents } from '../../src/services/events.service.js';
+import {
+  deleteEvent,
+  EventConflictError,
+  getEventById,
+  getFutureEvents,
+  updateEvent
+} from '../../src/services/events.service.js';
 
 function databaseEvent(overrides: Record<string, unknown> = {}) {
   return {
@@ -64,7 +84,11 @@ describe('events service public reads', () => {
     });
     expect(prismaMocks.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: '00000000-0000-4000-8000-000000000001', isPublicVisible: true }
+        where: {
+          id: '00000000-0000-4000-8000-000000000001',
+          isPublicVisible: true,
+          eventStatus: { not: 'DRAFT' }
+        }
       })
     );
   });
@@ -72,5 +96,55 @@ describe('events service public reads', () => {
   it('returns null for an invalid event identifier without querying the database', async () => {
     await expect(getEventById('not-an-event-id')).resolves.toBeNull();
     expect(prismaMocks.findFirst).not.toHaveBeenCalled();
+  });
+});
+
+describe('events service lifecycle and deletion', () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it('rejects a stale lifecycle write instead of overwriting an advanced status', async () => {
+    prismaMocks.findUnique.mockResolvedValue(databaseEvent({ eventStatus: 'AVAILABLE' }));
+    prismaMocks.update.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Record no longer matches', { code: 'P2025', clientVersion: '6.19.3' })
+    );
+    await expect(updateEvent('event-1', { eventStatus: 'SOLD_OUT' })).rejects.toBeInstanceOf(EventConflictError);
+    expect(prismaMocks.update).toHaveBeenCalledWith({
+      where: { id: 'event-1', eventStatus: 'AVAILABLE' },
+      data: { eventStatus: 'SOLD_OUT' }
+    });
+  });
+
+  it('allows the next lifecycle state when the stored status still matches', async () => {
+    prismaMocks.findUnique.mockResolvedValue(databaseEvent());
+    prismaMocks.update.mockResolvedValue(databaseEvent({ eventStatus: 'SOLD_OUT' }));
+    await expect(updateEvent('event-1', { eventStatus: 'SOLD_OUT' })).resolves.toMatchObject({
+      eventStatus: 'SOLD_OUT'
+    });
+  });
+
+  it('rejects skipped and backward lifecycle transitions before updating', async () => {
+    prismaMocks.findUnique.mockResolvedValue(databaseEvent({ eventStatus: 'ON_GOING' }));
+    await expect(updateEvent('event-1', { eventStatus: 'AVAILABLE' })).rejects.toBeInstanceOf(EventConflictError);
+    expect(prismaMocks.update).not.toHaveBeenCalled();
+  });
+
+  it('checks result protection inside the deletion transaction', async () => {
+    prismaMocks.txEventFindUnique.mockResolvedValue({ eventStatus: 'DRAFT', races: [{ _count: { results: 1 } }] });
+    prismaMocks.transaction.mockImplementation((operation: (transaction: unknown) => unknown) =>
+      operation({
+        $queryRaw: prismaMocks.txQueryRaw,
+        event: { findUnique: prismaMocks.txEventFindUnique, delete: prismaMocks.txEventDelete },
+        race: { deleteMany: prismaMocks.txRaceDeleteMany }
+      })
+    );
+    await expect(deleteEvent('event-1')).resolves.toEqual({ success: false, errorCode: 'ACS07' });
+    expect(prismaMocks.txEventDelete).not.toHaveBeenCalled();
+    expect(prismaMocks.txQueryRaw.mock.calls.map(([query, id]) => [query.join('?'), id])).toEqual([
+      ['SELECT id FROM events WHERE id = ? FOR UPDATE', 'event-1'],
+      ['SELECT id FROM races WHERE event_id = ? ORDER BY id FOR UPDATE', 'event-1']
+    ]);
+    expect(prismaMocks.txQueryRaw.mock.invocationCallOrder[1]).toBeLessThan(
+      prismaMocks.txEventFindUnique.mock.invocationCallOrder[0]!
+    );
   });
 });

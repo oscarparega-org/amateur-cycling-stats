@@ -64,6 +64,21 @@ export default async function OrganizationPage({
         </div>
       </div>
 
+      <nav aria-label={t('Navegación de la organización')} className="mt-6 flex gap-2 border-b border-slate-300 pb-4">
+        <Link
+          className="rounded-md bg-[#102a43] px-4 py-2 font-bold text-white"
+          href={localePath(locale, `/admin/organizations/${organization.id}/events`)}
+        >
+          {t('Eventos')}
+        </Link>
+        <Link
+          className="rounded-md border border-slate-300 bg-white px-4 py-2 font-bold"
+          href={localePath(locale, `/admin/organizations/${organization.id}/categories`)}
+        >
+          {t('Categorías')}
+        </Link>
+      </nav>
+
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(15rem,0.6fr)]">
         <section className="border-t-4 border-[#2563eb] bg-white p-6 shadow-sm sm:p-8">
           <h2 className="display-font text-3xl font-semibold text-[#102a43]">{t('Información')}</h2>

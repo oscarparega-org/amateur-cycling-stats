@@ -8,9 +8,11 @@ The current API supports global and organization categories, but the target prod
 - Add admin and organizer UI for organization-scoped category CRUD.
 - Add event-scoped age, gender, and distance categories owned by exactly one event.
 - Replace the `isGlobal` flag with scope derived from mutually exclusive `organizationId` and `eventId` values.
-- Allow owner and staff management at organization/event scope while keeping global writes admin-only.
+- Allow organizers belonging to an organization to manage its organization/event categories while keeping global writes admin-only.
 - Protect default categories, validate age ranges, and block deletion of categories used by races.
 - Update race forms to present Global, Organization, and Event columns in one selection group per type.
+- Show inherited categories as read-only references on organization and event category pages.
+- Keep distance categories focused on name and decimal distance; legacy description and raw route embeds are excluded.
 - **BREAKING**: Change category scope representation and shared/API contracts.
 
 ## Non-Goals

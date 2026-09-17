@@ -64,13 +64,13 @@ model User {
   status        UserStatus @default(ACTIVE)
   roleId        String?    @map("role_id")
 
-  role                  Role?                    @relation(fields: [roleId], references: [id])
-  cyclist               Cyclist?
-  organizers            Organizer[]
-  createdEvents         Event[]                  @relation("EventCreator")
-  sentInvitations       OrganizationInvitation[] @relation("InvitedBy")
-  sessions              Session[]
-  accounts              Account[]
+  role            Role?                    @relation(fields: [roleId], references: [id])
+  cyclist         Cyclist?
+  organizers      Organizer[]
+  createdEvents   Event[]                  @relation("EventCreator")
+  sentInvitations OrganizationInvitation[] @relation("InvitedBy")
+  sessions        Session[]
+  accounts        Account[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -84,10 +84,10 @@ model Organization {
   description String?
   state       OrganizationState @default(ACTIVE)
 
-  organizers         Organizer[]
-  events             Event[]
-  invitations        OrganizationInvitation[]
-  raceCategories     RaceCategory[]
+  organizers          Organizer[]
+  events              Event[]
+  invitations         OrganizationInvitation[]
+  raceCategories      RaceCategory[]
   raceCategoryGenders RaceCategoryGender[]
   raceCategoryLengths RaceCategoryLength[]
 
@@ -141,6 +141,7 @@ model Event {
   name            String
   description     String?
   dateTime        DateTime    @map("date_time")
+  timeZone        String      @default("UTC") @map("time_zone")
   eventStatus     EventStatus @default(DRAFT) @map("event_status")
   year            Int
   country         String
@@ -150,9 +151,12 @@ model Event {
   createdBy       String      @map("created_by")
   organizationId  String?     @map("organization_id")
 
-  creator      User          @relation("EventCreator", fields: [createdBy], references: [id])
-  organization Organization? @relation(fields: [organizationId], references: [id])
-  races        Race[]
+  creator             User                 @relation("EventCreator", fields: [createdBy], references: [id])
+  organization        Organization?        @relation(fields: [organizationId], references: [id])
+  races               Race[]
+  raceCategories      RaceCategory[]
+  raceCategoryGenders RaceCategoryGender[]
+  raceCategoryLengths RaceCategoryLength[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -163,18 +167,17 @@ model Event {
 model Race {
   id                     String   @id @default(uuid())
   eventId                String   @map("event_id")
-  name                   String?
   description            String?
   dateTime               DateTime @map("date_time")
   raceCategoryAgeId      String   @map("race_category_age_id")
   raceCategoryGenderId   String   @map("race_category_gender_id")
   raceCategoryDistanceId String   @map("race_category_distance_id")
-  isPublicVisible        Boolean  @default(false) @map("is_public_visible")
+  isPublicVisible        Boolean  @default(true) @map("is_public_visible")
 
   event            Event              @relation(fields: [eventId], references: [id])
   categoryAge      RaceCategory       @relation(fields: [raceCategoryAgeId], references: [id])
   categoryGender   RaceCategoryGender @relation(fields: [raceCategoryGenderId], references: [id])
-  categoryDistance  RaceCategoryLength @relation(fields: [raceCategoryDistanceId], references: [id])
+  categoryDistance RaceCategoryLength @relation(fields: [raceCategoryDistanceId], references: [id])
   results          RaceResult[]
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -191,7 +194,7 @@ model RaceResult {
   time      String?
   place     Int
 
-  race    Race    @relation(fields: [raceId], references: [id])
+  race    Race    @relation(fields: [raceId], references: [id], onDelete: Cascade)
   cyclist Cyclist @relation(fields: [cyclistId], references: [id])
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -202,53 +205,62 @@ model RaceResult {
 }
 
 model RaceCategory {
-  id             String        @id @default(uuid())
-  name           String        @unique
-  fromAge        Int?          @map("from_age")
-  toAge          Int?          @map("to_age")
-  isGlobal       Boolean       @default(true) @map("is_global")
-  isDefault      Boolean       @default(false) @map("is_default")
-  organizationId String?       @map("organization_id")
+  id             String  @id @default(uuid())
+  name           String
+  fromAge        Int?    @map("from_age")
+  toAge          Int?    @map("to_age")
+  isDefault      Boolean @default(false) @map("is_default")
+  organizationId String? @map("organization_id")
+  eventId        String? @map("event_id")
 
   organization Organization? @relation(fields: [organizationId], references: [id])
+  event        Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
   races        Race[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([organizationId])
+  @@index([eventId])
   @@map("race_categories")
 }
 
 model RaceCategoryGender {
   id             String  @id @default(uuid())
-  name           String  @unique
-  isGlobal       Boolean @default(true) @map("is_global")
+  name           String
   isDefault      Boolean @default(false) @map("is_default")
   organizationId String? @map("organization_id")
+  eventId        String? @map("event_id")
 
   organization Organization? @relation(fields: [organizationId], references: [id])
+  event        Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
   races        Race[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([organizationId])
+  @@index([eventId])
   @@map("race_category_genders")
 }
 
 model RaceCategoryLength {
   id             String  @id @default(uuid())
-  name           String  @unique
+  name           String
   distance       Float?
-  isGlobal       Boolean @default(true) @map("is_global")
   isDefault      Boolean @default(false) @map("is_default")
   organizationId String? @map("organization_id")
+  eventId        String? @map("event_id")
 
   organization Organization? @relation(fields: [organizationId], references: [id])
+  event        Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
   races        Race[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([organizationId])
+  @@index([eventId])
   @@map("race_category_lengths")
 }
 
