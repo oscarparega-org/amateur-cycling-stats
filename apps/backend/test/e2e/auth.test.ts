@@ -204,22 +204,30 @@ describe('Production database bootstrap', () => {
     const [roles, cyclistGenders, categories, categoryGenders, categoryLengths] = await Promise.all([
       prisma.role.findMany({ select: { name: true } }),
       prisma.cyclistGender.findMany({ select: { name: true } }),
-      prisma.raceCategory.findMany({ select: { name: true, isGlobal: true, isDefault: true } }),
-      prisma.raceCategoryGender.findMany({ select: { name: true, isGlobal: true, isDefault: true } }),
-      prisma.raceCategoryLength.findMany({ select: { name: true, isGlobal: true, isDefault: true } })
+      prisma.raceCategory.findMany({ select: { name: true, organizationId: true, eventId: true, isDefault: true } }),
+      prisma.raceCategoryGender.findMany({
+        select: { name: true, organizationId: true, eventId: true, isDefault: true }
+      }),
+      prisma.raceCategoryLength.findMany({
+        select: { name: true, organizationId: true, eventId: true, isDefault: true }
+      })
     ]);
 
     expect(roles).toHaveLength(4);
     expect(roles.map(({ name }) => name)).toEqual(expect.arrayContaining(['PUBLIC', 'CYCLIST', 'ORGANIZER', 'ADMIN']));
     expect(cyclistGenders.map(({ name }) => name)).toEqual(expect.arrayContaining(['M', 'F']));
     expect(categories).toHaveLength(26);
-    expect(categories.every(({ isGlobal }) => isGlobal)).toBe(true);
+    expect(categories.every(({ organizationId, eventId }) => organizationId === null && eventId === null)).toBe(true);
     expect(categories.filter(({ isDefault }) => isDefault).map(({ name }) => name)).toEqual(['Absoluta']);
     expect(categoryGenders).toHaveLength(3);
-    expect(categoryGenders.every(({ isGlobal }) => isGlobal)).toBe(true);
+    expect(categoryGenders.every(({ organizationId, eventId }) => organizationId === null && eventId === null)).toBe(
+      true
+    );
     expect(categoryGenders.filter(({ isDefault }) => isDefault).map(({ name }) => name)).toEqual(['Abierto']);
     expect(categoryLengths).toHaveLength(4);
-    expect(categoryLengths.every(({ isGlobal }) => isGlobal)).toBe(true);
+    expect(categoryLengths.every(({ organizationId, eventId }) => organizationId === null && eventId === null)).toBe(
+      true
+    );
     expect(categoryLengths.filter(({ isDefault }) => isDefault).map(({ name }) => name)).toEqual(['Única']);
   });
 });
@@ -484,8 +492,8 @@ describe('Hono authentication', () => {
     const forbidden = await post(browser, '/api/events', {
       name: 'Private Event',
       description: '',
-      dateTime: new Date().toISOString(),
-      year: new Date().getFullYear(),
+      localDateTime: new Date().toISOString().slice(0, 19),
+      timeZone: 'UTC',
       country: 'MX',
       state: 'CDMX',
       organizationId: organization.id
@@ -515,8 +523,8 @@ describe('Hono authentication', () => {
     });
     const eventInput = {
       name: 'Session-owned event',
-      dateTime: new Date(Date.now() + 86_400_000).toISOString(),
-      year: new Date().getFullYear(),
+      localDateTime: new Date(Date.now() + 86_400_000).toISOString().slice(0, 19),
+      timeZone: 'UTC',
       country: 'MX',
       state: 'CDMX',
       organizationId: organization.id
@@ -632,9 +640,8 @@ describe('Hono authentication', () => {
       }))
     });
 
-    const publicEvents = (await (
-      await fetch(`${baseUrl}/api/events?organizationId=${organizationId}&filter=all`)
-    ).json()) as Array<{ id: string }>;
+    expect((await fetch(`${baseUrl}/api/events/management?organizationId=${organizationId}`)).status).toBe(401);
+    const publicEvents = (await (await fetch(`${baseUrl}/api/events`)).json()) as Array<{ id: string }>;
     expect(publicEvents.map(({ id }) => id)).toContain(publicEvent.id);
     expect(publicEvents.map(({ id }) => id)).not.toContain(privateEvent.id);
     expect((await fetch(`${baseUrl}/api/events/${privateEvent.id}`)).status).toBe(404);
