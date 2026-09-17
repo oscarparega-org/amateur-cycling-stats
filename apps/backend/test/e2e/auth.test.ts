@@ -573,6 +573,7 @@ describe('Hono authentication', () => {
           year: dateTime.getFullYear(),
           country: 'MX',
           state: 'Jalisco',
+          eventStatus: 'AVAILABLE',
           isPublicVisible: true,
           createdBy: creator.id,
           organizationId
@@ -659,7 +660,7 @@ describe('Hono authentication', () => {
 
     const organizerBrowser = await signIn('organizer@example.com', 'password123');
     const managedEvents = (await (
-      await organizerBrowser(`${baseUrl}/api/events?organizationId=${organizationId}&filter=all`)
+      await organizerBrowser(`${baseUrl}/api/events/management?organizationId=${organizationId}&filter=all`)
     ).json()) as Array<{ id: string }>;
     expect(managedEvents.map(({ id }) => id)).toEqual(expect.arrayContaining([publicEvent.id, privateEvent.id]));
     expect((await organizerBrowser(`${baseUrl}/api/events/${privateEvent.id}`)).status).toBe(200);

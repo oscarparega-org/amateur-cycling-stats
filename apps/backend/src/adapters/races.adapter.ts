@@ -5,12 +5,13 @@ type PrismaRaceWithCategories = PrismaRace & {
   categoryAge: RaceCategory;
   categoryGender: RaceCategoryGender;
   categoryDistance: RaceCategoryLength;
+  _count: { results: number };
 };
 
 export function adaptRace(race: PrismaRaceWithCategories): Race {
   return {
     id: race.id,
-    name: race.name,
+    name: `${race.categoryAge.name} - ${race.categoryGender.name} - ${race.categoryDistance.name}`,
     description: race.description,
     dateTime: race.dateTime.toISOString(),
     eventId: race.eventId,
@@ -20,6 +21,7 @@ export function adaptRace(race: PrismaRaceWithCategories): Race {
     raceCategoryAgeName: race.categoryAge.name,
     raceCategoryGenderName: race.categoryGender.name,
     raceCategoryDistanceName: race.categoryDistance.name,
+    resultCount: race._count.results,
     isPublicVisible: race.isPublicVisible,
     createdAt: race.createdAt.toISOString(),
     updatedAt: race.updatedAt.toISOString()
@@ -29,5 +31,6 @@ export function adaptRace(race: PrismaRaceWithCategories): Race {
 export const raceInclude = {
   categoryAge: true,
   categoryGender: true,
-  categoryDistance: true
+  categoryDistance: true,
+  _count: { select: { results: true } }
 } as const;

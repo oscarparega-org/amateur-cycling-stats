@@ -1,154 +1,174 @@
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
-import * as catService from '../services/categories.service.js';
-import { requireOrgMember, requireRole } from '../lib/auth-helpers.js';
-import { RoleTypeEnum } from '@acs/shared';
-import { atLeastOneField, parseJson, shortText, uuid } from '../lib/validation.js';
+import { RoleTypeEnum, PG_ERROR_CODES } from '@acs/shared';
+import * as categoryService from '../services/categories.service.js';
+import { requireEventOrgMember, requireOrgMember, requireRole } from '../lib/auth-helpers.js';
+import { atLeastOneField, parseJson, shortText } from '../lib/validation.js';
 
-const categories = new Hono();
+const categoryTypeSchema = z.enum(['age', 'gender', 'distance']);
+type CategoryType = z.infer<typeof categoryTypeSchema>;
 
-const createAgeCategorySchema = z
+const createAgeSchema = z
   .object({
     name: shortText,
     fromAge: z.number().int().min(0).max(150).optional(),
-    toAge: z.number().int().min(0).max(150).optional(),
-    organizationId: uuid.optional()
+    toAge: z.number().int().min(0).max(150).optional()
   })
   .strict()
-  .refine(
-    ({ fromAge, toAge }) => fromAge === undefined || toAge === undefined || fromAge <= toAge,
-    'fromAge must be less than or equal to toAge'
-  );
-const updateAgeCategorySchema = atLeastOneField({
+  .refine(({ fromAge, toAge }) => fromAge === undefined || toAge === undefined || fromAge <= toAge, {
+    path: ['toAge'],
+    message: 'Must be greater than or equal to fromAge'
+  });
+const updateAgeSchema = atLeastOneField({
   name: shortText.optional(),
   fromAge: z.number().int().min(0).max(150).nullable().optional(),
   toAge: z.number().int().min(0).max(150).nullable().optional()
 });
-const createGenderCategorySchema = z.object({ name: shortText, organizationId: uuid.optional() }).strict();
-const updateGenderCategorySchema = atLeastOneField({ name: shortText.optional() });
-const createDistanceCategorySchema = z
-  .object({
-    name: shortText,
-    distance: z.number().nonnegative().max(100_000).optional(),
-    organizationId: uuid.optional()
-  })
+const createGenderSchema = z.object({ name: shortText }).strict();
+const updateGenderSchema = atLeastOneField({ name: shortText.optional() });
+const createDistanceSchema = z
+  .object({ name: shortText, distance: z.number().min(0.001).max(1_000).optional() })
   .strict();
-const updateDistanceCategorySchema = atLeastOneField({
+const updateDistanceSchema = atLeastOneField({
   name: shortText.optional(),
-  distance: z.number().nonnegative().max(100_000).nullable().optional()
+  distance: z.number().min(0.001).max(1_000).nullable().optional()
 });
 
-// Helper: check auth for category write operations
-async function requireCategoryWriteAuth(c: Context, organizationId?: string) {
-  if (!organizationId) {
-    // Global category — admin only
-    await requireRole(c, [RoleTypeEnum.ADMIN]);
-  } else {
-    // Org-scoped category — admin or organization member
-    await requireOrgMember(c, organizationId);
-  }
+type ScopeKind = 'global' | 'organization' | 'event';
+
+function param(c: Context, name: string) {
+  const value = c.req.param(name);
+  if (!value) throw new Error(`Missing route parameter: ${name}`);
+  return value;
 }
 
-// === Age ===
-categories.get('/age', async (c) => {
-  const organizationId = c.req.query('organizationId');
-  return c.json(await catService.getAgeCategories(organizationId || undefined));
-});
+function owner(c: Context, kind: ScopeKind): categoryService.CategoryOwner {
+  if (kind === 'organization') return { scope: 'ORGANIZATION', organizationId: param(c, 'organizationId') };
+  if (kind === 'event') return { scope: 'EVENT', eventId: param(c, 'eventId') };
+  return { scope: 'GLOBAL' };
+}
 
-categories.post('/age', async (c) => {
-  const body = await parseJson(c, createAgeCategorySchema);
-  await requireCategoryWriteAuth(c, body.organizationId);
-  const cat = await catService.createAgeCategory(body);
-  return c.json(cat, 201);
-});
+async function authorize(c: Context, kind: ScopeKind) {
+  if (kind === 'organization') return requireOrgMember(c, param(c, 'organizationId'));
+  if (kind === 'event') return requireEventOrgMember(c, param(c, 'eventId'));
+  return requireRole(c, [RoleTypeEnum.ADMIN]);
+}
 
-categories.patch('/age/:id', async (c) => {
-  const cat = await catService.getAgeCategoryRaw(c.req.param('id'));
-  if (!cat) return c.json({ error: 'Not found' }, 404);
-  await requireCategoryWriteAuth(c, cat.organizationId ?? undefined);
-  const updated = await catService.updateAgeCategory(c.req.param('id'), await parseJson(c, updateAgeCategorySchema));
-  if (!updated) return c.json({ error: 'Not found' }, 404);
-  return c.json(updated);
-});
+function typeFrom(c: Context): CategoryType | null {
+  const parsed = categoryTypeSchema.safeParse(c.req.param('type'));
+  return parsed.success ? parsed.data : null;
+}
 
-categories.delete('/age/:id', async (c) => {
-  const cat = await catService.getAgeCategoryRaw(c.req.param('id'));
-  if (!cat) return c.json({ error: 'Not found' }, 404);
-  await requireCategoryWriteAuth(c, cat.organizationId ?? undefined);
-  const result = await catService.deleteAgeCategory(c.req.param('id'));
-  if (result.errorCode === 'NOT_FOUND') return c.json({ error: 'Not found' }, 404);
-  if (result.errorCode) return c.json({ error: 'Cannot delete category', code: result.errorCode }, 409);
-  return c.json({ success: true });
-});
+function conflict(c: Context, error: unknown) {
+  if (error instanceof categoryService.CategoryInputError) {
+    return c.json(
+      {
+        error: 'Invalid request',
+        code: 'VALIDATION_ERROR',
+        issues: [{ field: error.field, message: error.message }]
+      },
+      400
+    );
+  }
+  if (!(error instanceof categoryService.CategoryConflictError)) throw error;
+  const message =
+    error.code === PG_ERROR_CODES.PROTECTED_CATEGORY
+      ? 'Default categories cannot be modified'
+      : 'A category with this name already exists in this scope';
+  return c.json({ error: message, code: error.code }, 409);
+}
 
-// === Gender ===
-categories.get('/gender', async (c) => {
-  const organizationId = c.req.query('organizationId');
-  return c.json(await catService.getGenderCategories(organizationId || undefined));
-});
+function router(kind: ScopeKind) {
+  const app = new Hono();
 
-categories.post('/gender', async (c) => {
-  const body = await parseJson(c, createGenderCategorySchema);
-  await requireCategoryWriteAuth(c, body.organizationId);
-  const cat = await catService.createGenderCategory(body);
-  return c.json(cat, 201);
-});
+  if (kind === 'event') {
+    app.get('/available', async (c) => {
+      await requireEventOrgMember(c, param(c, 'eventId'));
+      const result = await categoryService.getAvailableCategories(param(c, 'eventId'));
+      return result ? c.json(result) : c.json({ error: 'Not found' }, 404);
+    });
+  }
 
-categories.patch('/gender/:id', async (c) => {
-  const cat = await catService.getGenderCategoryRaw(c.req.param('id'));
-  if (!cat) return c.json({ error: 'Not found' }, 404);
-  await requireCategoryWriteAuth(c, cat.organizationId ?? undefined);
-  const updated = await catService.updateGenderCategory(
-    c.req.param('id'),
-    await parseJson(c, updateGenderCategorySchema)
-  );
-  if (!updated) return c.json({ error: 'Not found' }, 404);
-  return c.json(updated);
-});
+  app.get('/:type', async (c) => {
+    if (kind !== 'global') await authorize(c, kind);
+    const type = typeFrom(c);
+    if (!type) return c.json({ error: 'Not found' }, 404);
+    const scope = owner(c, kind);
+    if (type === 'age') return c.json(await categoryService.getAgeCategories(scope));
+    if (type === 'gender') return c.json(await categoryService.getGenderCategories(scope));
+    return c.json(await categoryService.getDistanceCategories(scope));
+  });
 
-categories.delete('/gender/:id', async (c) => {
-  const cat = await catService.getGenderCategoryRaw(c.req.param('id'));
-  if (!cat) return c.json({ error: 'Not found' }, 404);
-  await requireCategoryWriteAuth(c, cat.organizationId ?? undefined);
-  const result = await catService.deleteGenderCategory(c.req.param('id'));
-  if (result.errorCode === 'NOT_FOUND') return c.json({ error: 'Not found' }, 404);
-  if (result.errorCode) return c.json({ error: 'Cannot delete category', code: result.errorCode }, 409);
-  return c.json({ success: true });
-});
+  app.get('/:type/:categoryId', async (c) => {
+    if (kind !== 'global') await authorize(c, kind);
+    const type = typeFrom(c);
+    if (!type) return c.json({ error: 'Not found' }, 404);
+    const scope = owner(c, kind);
+    const id = c.req.param('categoryId');
+    const category =
+      type === 'age'
+        ? await categoryService.getAgeCategory(id, scope)
+        : type === 'gender'
+          ? await categoryService.getGenderCategory(id, scope)
+          : await categoryService.getDistanceCategory(id, scope);
+    return category ? c.json(category) : c.json({ error: 'Not found' }, 404);
+  });
 
-// === Distance ===
-categories.get('/distance', async (c) => {
-  const organizationId = c.req.query('organizationId');
-  return c.json(await catService.getDistanceCategories(organizationId || undefined));
-});
+  app.post('/:type', async (c) => {
+    await authorize(c, kind);
+    const type = typeFrom(c);
+    if (!type) return c.json({ error: 'Not found' }, 404);
+    const scope = owner(c, kind);
+    try {
+      if (type === 'age')
+        return c.json(await categoryService.createAgeCategory(scope, await parseJson(c, createAgeSchema)), 201);
+      if (type === 'gender')
+        return c.json(await categoryService.createGenderCategory(scope, await parseJson(c, createGenderSchema)), 201);
+      return c.json(await categoryService.createDistanceCategory(scope, await parseJson(c, createDistanceSchema)), 201);
+    } catch (error) {
+      return conflict(c, error);
+    }
+  });
 
-categories.post('/distance', async (c) => {
-  const body = await parseJson(c, createDistanceCategorySchema);
-  await requireCategoryWriteAuth(c, body.organizationId);
-  const cat = await catService.createDistanceCategory(body);
-  return c.json(cat, 201);
-});
+  app.patch('/:type/:categoryId', async (c) => {
+    await authorize(c, kind);
+    const type = typeFrom(c);
+    if (!type) return c.json({ error: 'Not found' }, 404);
+    const scope = owner(c, kind);
+    const id = c.req.param('categoryId');
+    try {
+      const category =
+        type === 'age'
+          ? await categoryService.updateAgeCategory(id, scope, await parseJson(c, updateAgeSchema))
+          : type === 'gender'
+            ? await categoryService.updateGenderCategory(id, scope, await parseJson(c, updateGenderSchema))
+            : await categoryService.updateDistanceCategory(id, scope, await parseJson(c, updateDistanceSchema));
+      return category ? c.json(category) : c.json({ error: 'Not found' }, 404);
+    } catch (error) {
+      return conflict(c, error);
+    }
+  });
 
-categories.patch('/distance/:id', async (c) => {
-  const cat = await catService.getDistanceCategoryRaw(c.req.param('id'));
-  if (!cat) return c.json({ error: 'Not found' }, 404);
-  await requireCategoryWriteAuth(c, cat.organizationId ?? undefined);
-  const updated = await catService.updateDistanceCategory(
-    c.req.param('id'),
-    await parseJson(c, updateDistanceCategorySchema)
-  );
-  if (!updated) return c.json({ error: 'Not found' }, 404);
-  return c.json(updated);
-});
+  app.delete('/:type/:categoryId', async (c) => {
+    await authorize(c, kind);
+    const type = typeFrom(c);
+    if (!type) return c.json({ error: 'Not found' }, 404);
+    const scope = owner(c, kind);
+    const id = c.req.param('categoryId');
+    const result =
+      type === 'age'
+        ? await categoryService.deleteAgeCategory(id, scope)
+        : type === 'gender'
+          ? await categoryService.deleteGenderCategory(id, scope)
+          : await categoryService.deleteDistanceCategory(id, scope);
+    if (result.errorCode === 'NOT_FOUND') return c.json({ error: 'Not found' }, 404);
+    if (result.errorCode) return c.json({ error: 'Cannot delete category', code: result.errorCode }, 409);
+    return c.json({ success: true });
+  });
 
-categories.delete('/distance/:id', async (c) => {
-  const cat = await catService.getDistanceCategoryRaw(c.req.param('id'));
-  if (!cat) return c.json({ error: 'Not found' }, 404);
-  await requireCategoryWriteAuth(c, cat.organizationId ?? undefined);
-  const result = await catService.deleteDistanceCategory(c.req.param('id'));
-  if (result.errorCode === 'NOT_FOUND') return c.json({ error: 'Not found' }, 404);
-  if (result.errorCode) return c.json({ error: 'Cannot delete category', code: result.errorCode }, 409);
-  return c.json({ success: true });
-});
+  return app;
+}
 
-export { categories };
+export const categories = router('global');
+export const organizationCategories = router('organization');
+export const eventCategories = router('event');

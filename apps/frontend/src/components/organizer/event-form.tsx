@@ -1,9 +1,9 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
-import type { Event } from '@acs/shared';
-import type { EventFormState } from '@/app/organizer/actions';
+import { eventLocalDateTime, type Event } from '@acs/shared';
+import type { EventFormState } from '@/lib/event-actions';
 import { Alert } from '@/components/alert';
 import { translate, type Locale } from '@/lib/i18n';
 
@@ -23,15 +23,19 @@ function SaveButton({ editing, locale }: { editing: boolean; locale: Locale }) {
   );
 }
 
-function dateTimeValue(value?: string) {
-  if (!value) return '';
-  const date = new Date(value);
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+function dateTimeValue(event?: Event) {
+  if (!event) return '';
+  return eventLocalDateTime(event.dateTime, event.timeZone).slice(0, 16);
 }
 
 export function EventForm({ action, event, locale = 'es' }: { action: EventAction; event?: Event; locale?: Locale }) {
   const [state, formAction] = useActionState(action, {});
+  const timeZoneInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!event && timeZoneInput.current) {
+      timeZoneInput.current.value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    }
+  }, [event]);
   const t = (text: string) => translate(locale, text);
   const input =
     'mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-[#102a43] shadow-sm placeholder:text-slate-400 focus:border-blue-600';
@@ -55,11 +59,15 @@ export function EventForm({ action, event, locale = 'es' }: { action: EventActio
         {t('Fecha y hora')}
         <input
           className={input}
-          defaultValue={dateTimeValue(event?.dateTime)}
-          name="dateTime"
+          defaultValue={dateTimeValue(event)}
+          name="localDateTime"
           required
           type="datetime-local"
         />
+      </label>
+      <label className="block font-semibold">
+        {t('Zona horaria IANA')}
+        <input className={input} defaultValue={event?.timeZone ?? 'UTC'} name="timeZone" ref={timeZoneInput} required />
       </label>
       <fieldset>
         <legend className="font-semibold">{t('Ubicación')}</legend>
@@ -80,7 +88,6 @@ export function EventForm({ action, event, locale = 'es' }: { action: EventActio
       </fieldset>
       <div className="flex items-center gap-4 border-t border-slate-200 pt-6">
         <SaveButton editing={Boolean(event)} locale={locale} />
-        <p className="text-sm text-slate-500">{t('Los eventos nuevos permanecen ocultos hasta que los publiques.')}</p>
       </div>
     </form>
   );

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import { notFound } from 'next/navigation';
-import { updateEventAction } from '@/app/organizer/actions';
+import { updateEventAction } from '@/lib/event-actions';
 import { EventForm } from '@/components/organizer/event-form';
 import { PageHeading } from '@/components/organizer/page-heading';
 import { getOrganizationEvent } from '@/lib/organizer';
@@ -28,7 +28,7 @@ export default async function EditEventPage({
       <PageHeading title={t('Editar evento')} />
       <section className="border border-slate-200 bg-white p-6 sm:p-8">
         <EventForm
-          action={updateEventAction.bind(null, locale, organizationId, eventId)}
+          action={updateEventAction.bind(null, locale, organizationId, eventId, `/organizer/${organizationId}/events`)}
           event={event}
           locale={locale}
         />

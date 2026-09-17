@@ -52,6 +52,11 @@ Event creation and editing SHALL validate name, date/time, country, state, and o
 - **WHEN** a caller submits an invalid date/time
 - **THEN** the API returns field-level validation and does not persist an event
 
+#### Scenario: Interpret an event timezone
+
+- **WHEN** a caller submits a valid local date/time and IANA timezone
+- **THEN** the system stores the corresponding UTC instant and derives the calendar year in that timezone
+
 ### Requirement: Event visibility
 
 Public users SHALL see an event only when its lifecycle and `isPublicVisible` state permit publication; organization members and admins SHALL see managed events regardless of public visibility.

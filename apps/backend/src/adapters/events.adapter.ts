@@ -11,6 +11,7 @@ export function adaptEvent(event: PrismaEvent): Event {
     name: event.name,
     description: event.description,
     dateTime: event.dateTime.toISOString(),
+    timeZone: event.timeZone,
     year: event.year,
     city: event.city,
     state: event.state,

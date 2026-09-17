@@ -11,11 +11,11 @@ Category reads SHALL distinguish global, organization, and event scope. A race-m
 
 ### Requirement: Category write authorization
 
-Only admins SHALL write global categories; admins and organization owners or staff SHALL write categories owned by their organization or one of its events.
+Only admins SHALL write global categories; admins and organizers belonging to an organization SHALL write categories owned by that organization or one of its events.
 
-#### Scenario: Staff writes an event category in their organization
+#### Scenario: Organizer writes an event category in their organization
 
-- **WHEN** an organizer staff member submits a valid event category for their organization's event
+- **WHEN** an organizer member submits a valid event category for their organization's event
 - **THEN** the write is authorized
 
 ### Requirement: Category creation scope
@@ -55,6 +55,20 @@ Names SHALL be required; age categories SHALL enforce `fromAge <= toAge` when bo
 
 - **WHEN** a caller submits `fromAge` greater than `toAge`
 - **THEN** the request is rejected with field-level validation
+
+#### Scenario: Reuse a global label in an event
+
+- **WHEN** an event category uses a name that already exists globally but not in that event
+- **THEN** creation succeeds because uniqueness is enforced within the owning scope
+
+### Requirement: Inherited category reference
+
+Organization and event management interfaces SHALL show inherited categories as read-only references while limiting mutations to the current scope.
+
+#### Scenario: View event categories
+
+- **WHEN** an authorized user opens an event category page
+- **THEN** global and organization categories are visible without mutation actions and event categories are manageable
 
 ### Requirement: Default category immutability
 

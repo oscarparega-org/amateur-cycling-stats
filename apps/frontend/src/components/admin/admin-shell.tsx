@@ -18,7 +18,10 @@ export function AdminShell({
   return (
     <ProtectedShell
       account={{ email: userEmail, name: userName }}
-      navigation={[{ href: path('/admin/organizations') as Route, icon: 'organizations', label: t('Organizaciones') }]}
+      navigation={[
+        { href: path('/admin/organizations') as Route, icon: 'organizations', label: t('Organizaciones') },
+        { href: path('/admin/categories') as Route, icon: 'categories', label: t('Categorías') }
+      ]}
       roleLabel={t('Administración')}
     >
       {children}

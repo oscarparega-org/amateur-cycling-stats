@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Route } from 'next';
-import { createEventAction } from '@/app/organizer/actions';
+import { createEventAction } from '@/lib/event-actions';
 import { EventForm } from '@/components/organizer/event-form';
 import { PageHeading } from '@/components/organizer/page-heading';
 import { localePath, resolveLocale, translate } from '@/lib/i18n';
@@ -23,7 +23,10 @@ export default async function NewEventPage({
       </Link>
       <PageHeading title={t('Crear evento')} />
       <section className="border border-slate-200 bg-white p-6 sm:p-8">
-        <EventForm action={createEventAction.bind(null, locale, organizationId)} locale={locale} />
+        <EventForm
+          action={createEventAction.bind(null, locale, organizationId, `/organizer/${organizationId}/events`)}
+          locale={locale}
+        />
       </section>
     </>
   );

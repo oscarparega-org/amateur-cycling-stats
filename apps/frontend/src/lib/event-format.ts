@@ -24,26 +24,35 @@ export function formatEventLocation(event: Pick<Event, 'city' | 'state' | 'count
   return [event.city, event.state, event.country].filter(Boolean).join(', ');
 }
 
-export function eventDateParts(dateTime: string, locale: Locale = 'es'): { day: string; month: string } {
+export function eventDateParts(
+  dateTime: string,
+  timeZone: string,
+  locale: Locale = 'es'
+): { day: string; month: string } {
   const date = new Date(dateTime);
   return {
-    day: new Intl.DateTimeFormat(localeDate(locale), { day: '2-digit' }).format(date),
-    month: new Intl.DateTimeFormat(localeDate(locale), { month: 'short' }).format(date).replace('.', '').toUpperCase()
+    day: new Intl.DateTimeFormat(localeDate(locale), { day: '2-digit', timeZone }).format(date),
+    month: new Intl.DateTimeFormat(localeDate(locale), { month: 'short', timeZone })
+      .format(date)
+      .replace('.', '')
+      .toUpperCase()
   };
 }
 
-export function formatEventDate(dateTime: string, locale: Locale = 'es'): string {
+export function formatEventDate(dateTime: string, timeZone: string, locale: Locale = 'es'): string {
   return new Intl.DateTimeFormat(localeDate(locale), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-    year: 'numeric'
+    year: 'numeric',
+    timeZone
   }).format(new Date(dateTime));
 }
 
-export function formatEventTime(dateTime: string, locale: Locale = 'es'): string {
+export function formatEventTime(dateTime: string, timeZone: string, locale: Locale = 'es'): string {
   return new Intl.DateTimeFormat(localeDate(locale), {
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    timeZone
   }).format(new Date(dateTime));
 }

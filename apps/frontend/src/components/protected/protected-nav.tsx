@@ -7,7 +7,7 @@ import { useLocale } from '@/components/locale-provider';
 
 export type ProtectedNavItem = {
   href: Route;
-  icon: 'overview' | 'events' | 'organizations' | 'results' | 'profile';
+  icon: 'overview' | 'events' | 'organizations' | 'categories' | 'results' | 'profile';
   label: string;
   match?: 'exact' | 'prefix';
 };
@@ -17,6 +17,7 @@ function NavIcon({ kind }: { kind: ProtectedNavItem['icon'] }) {
     overview: 'M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-3H4v3Zm10-13h6V4h-6v3Z',
     events: 'M7 3v3m10-3v3M4.5 9.5h15M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z',
     organizations: 'M4 20V8l8-4 8 4v12M8 20v-5h8v5M8 10h.01M12 10h.01M16 10h.01',
+    categories: 'M4 6h16M4 12h16M4 18h16M7 4v4m5 2v4m5 2v4',
     results: 'M5 4h14v16H5V4Zm3 11 2-3 2 2 4-5',
     profile: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0'
   } as const;

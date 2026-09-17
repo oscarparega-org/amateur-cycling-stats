@@ -1,3 +1,5 @@
+'use client';
+
 import type { Route } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
@@ -24,7 +26,8 @@ export function OrganizerShell({
       account={{ email: session.user.email, name: session.user.firstName || session.user.name }}
       navigation={[
         { href: base as Route, icon: 'overview', label: t('Resumen'), match: 'exact' },
-        { href: `${base}/events` as Route, icon: 'events', label: t('Eventos') }
+        { href: `${base}/events` as Route, icon: 'events', label: t('Eventos') },
+        { href: `${base}/categories` as Route, icon: 'categories', label: t('Categorías') }
       ]}
       roleLabel={t('Organización')}
       workspace={<OrganizationSwitcher activeOrganization={activeOrganization} organizations={organizations} />}

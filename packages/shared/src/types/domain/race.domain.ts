@@ -1,6 +1,6 @@
 export interface Race {
   id: string;
-  name: string | null;
+  name: string;
   description: string | null;
   dateTime: string;
   eventId: string;
@@ -10,6 +10,7 @@ export interface Race {
   raceCategoryAgeName: string;
   raceCategoryGenderName: string;
   raceCategoryDistanceName: string;
+  resultCount: number;
   isPublicVisible: boolean;
   createdAt: string;
   updatedAt: string;
